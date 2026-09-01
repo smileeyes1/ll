@@ -36,14 +36,21 @@ cd "$TMP/agent"
 mkdir -p swarm/autopilot
 echo '{"decision":"PROCEED"}' > swarm/autopilot/leadership-decision.json
 OUT="$TMP/out-stale"
-GITHUB_OUTPUT="$OUT" AUTONOMY_TASK_ID=T-STale bash swarm/autopilot/checkpoint.sh >/tmp/checkpoint-stale.log
+GITHUB_OUTPUT="$OUT" AUTONOMY_TASK_ID=T-STALE bash swarm/autopilot/checkpoint.sh >/tmp/checkpoint-stale.log
 grep -q '^stale=true$' "$OUT"
 test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 test -f remote-change.txt
 test ! -e swarm/autopilot/leadership-decision.json
 echo 'STALE_SNAPSHOT_GUARD=PASS'
 
-# On a fresh snapshot, checkpointing is allowed and is pushed normally.
+# git clean correctly removes untracked fixture tooling on stale reset. Recreate a
+# fresh agent checkout to prove normal checkpoint behavior independently.
+cd "$TMP"
+git clone "$TMP/remote.git" "$TMP/fresh" >/dev/null
+cd "$TMP/fresh"
+mkdir -p swarm/autopilot
+cp "$ROOT/swarm/autopilot/checkpoint.sh" swarm/autopilot/checkpoint.sh
+chmod +x swarm/autopilot/checkpoint.sh
 echo '{"decision":"PROCEED"}' > swarm/autopilot/leadership-decision.json
 OUT2="$TMP/out-fresh"
 GITHUB_OUTPUT="$OUT2" AUTONOMY_TASK_ID=T-FRESH bash swarm/autopilot/checkpoint.sh >/tmp/checkpoint-fresh.log
