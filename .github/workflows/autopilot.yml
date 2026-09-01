@@ -17,7 +17,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: autonomous-main
+  group: autonomous-main-v3
   cancel-in-progress: false
 
 jobs:
@@ -116,6 +116,7 @@ jobs:
           assert all(k in x for k in required)
           assert x['task_id']=='${{ steps.nbag.outputs.task_id }}'
           assert x['status'] in ('completed','blocked','failed')
+          assert x['evidence'] or x['status'] != 'completed'
           assert all(isinstance(e,dict) and 'path' in e and 'content' in e for e in x['edits'])
           d=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
           assert d['selected_task_id']==x['task_id']
