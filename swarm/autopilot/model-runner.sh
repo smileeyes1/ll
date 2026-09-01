@@ -68,19 +68,27 @@ env=os.environ.copy(); env['LD_LIBRARY_PATH']=os.path.dirname(os.environ['LLAMA_
 # makes the autonomous process exit after one generated response instead of
 # waiting for another interactive prompt until timeout.
 cmd=[os.environ['LLAMA_BIN'],'-m',os.environ['MODEL_PATH'],'-p',prompt,'-st','-n','160','-c','4096','-t','4','-b','256','--temp','0.1','--no-display-prompt']
+def decode(data):
+    if data is None: return ''
+    if isinstance(data,bytes): return data.decode('utf-8','replace')
+    return str(data)
 def failure(reason, raw_text=''):
+    raw_text=decode(raw_text)
     open(raw,'w',encoding='utf-8').write(raw_text)
     obj={'task_id':selected,'status':'failed','next_task':None,'summary':reason,'edits':[],'tests':[],'evidence':[],'failure_reason':reason}
     json.dump(obj,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
 try:
-    r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=180,env=env)
+    # Capture raw bytes because llama-cli may mix diagnostic bytes that are not
+    # valid UTF-8 even when the generated JSON is valid UTF-8/ASCII.
+    r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=180,env=env)
 except subprocess.TimeoutExpired as e:
-    failure('MODEL_TIMEOUT_RECOVERABLE',(e.stdout or '') if isinstance(e.stdout,str) else '')
+    failure('MODEL_TIMEOUT_RECOVERABLE',e.stdout)
     raise SystemExit(0)
-open(raw,'w',encoding='utf-8').write(r.stdout)
+text=decode(r.stdout)
+open(raw,'w',encoding='utf-8').write(text)
 if r.returncode!=0:
-    failure('MODEL_EXIT_'+str(r.returncode),r.stdout); raise SystemExit(0)
-text=r.stdout; start=text.find('{'); end=text.rfind('}')
+    failure('MODEL_EXIT_'+str(r.returncode),text); raise SystemExit(0)
+start=text.find('{'); end=text.rfind('}')
 if start<0 or end<=start:
     failure('MODEL_NO_JSON',text); raise SystemExit(0)
 try: obj=json.loads(text[start:end+1])
