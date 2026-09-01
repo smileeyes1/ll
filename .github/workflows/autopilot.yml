@@ -2,6 +2,12 @@ name: Ω Autonomous Project Loop
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'INTENT.md'
+      - 'intent-inbox/**'
+      - 'ops/autonomy-kick/**'
   schedule:
     - cron: '*/15 * * * *'
 
