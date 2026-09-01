@@ -1,0 +1,8 @@
+# Autonomous runtime / local model materialization
+swarm/autopilot/runtime/
+*.gguf
+
+# Common transient files
+__pycache__/
+*.pyc
+.DS_Store
