@@ -14,7 +14,17 @@
       "status": "pending",
       "depends_on": [],
       "goal": "Validate project objective and acceptance criteria",
-      "next": "SWARM-002"
+      "next": "SWARM-002",
+      "attempts": 1,
+      "updated_at": "2026-09-01T17:58:21.291321+00:00",
+      "proof": "leadership-nbag-schema-constrained-model-output-plus-independent-regression",
+      "recovery": {
+        "action": "automatic_retry",
+        "attempt": 1,
+        "max_retries": 3,
+        "time": "2026-09-01T17:58:21.371442+00:00",
+        "reason": "MODEL_NO_JSON"
+      }
     },
     {
       "id": "SWARM-002",
