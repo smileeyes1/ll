@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "gate": "OMEGA_NBAG",
+  "decision_time": "2026-09-01T17:55:43.138672+00:00",
+  "intent_present": true,
+  "state_present": true,
+  "candidate_count": 11,
+  "candidates": [
+    {
+      "task_id": "INTENT-GAP-006",
+      "score": 92,
+      "reasons": [
+        "role_value=80",
+        "intent_alignment=+12"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-001",
+      "score": 90,
+      "reasons": [
+        "role_value=90"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-003",
+      "score": 90,
+      "reasons": [
+        "role_value=90"
+      ]
+    },
+    {
+      "task_id": "SWARM-001",
+      "score": 90,
+      "reasons": [
+        "role_value=90"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-002",
+      "score": 88,
+      "reasons": [
+        "role_value=90",
+        "intent_alignment=+6",
+        "retry_penalty=-8"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-004",
+      "score": 80,
+      "reasons": [
+        "role_value=80"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-007",
+      "score": 76,
+      "reasons": [
+        "role_value=70",
+        "intent_alignment=+6"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-010",
+      "score": 76,
+      "reasons": [
+        "role_value=70",
+        "intent_alignment=+6"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-005",
+      "score": 70,
+      "reasons": [
+        "role_value=70"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-009",
+      "score": 62,
+      "reasons": [
+        "role_value=50",
+        "intent_alignment=+12"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-008",
+      "score": 56,
+      "reasons": [
+        "role_value=50",
+        "intent_alignment=+6"
+      ]
+    }
+  ],
+  "selected_task_id": "INTENT-GAP-006",
+  "decision": "EXECUTE",
+  "rule": "NO_VERIFIED_DECISION_NO_EXECUTION"
+}

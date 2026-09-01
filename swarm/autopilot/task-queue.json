@@ -3,7 +3,9 @@
   "policy": {
     "source_of_truth": "repository",
     "chat_memory_required": false,
-    "max_retries": 3
+    "max_retries": 3,
+    "intent_compiler": "enabled",
+    "gap_to_task_default": true
   },
   "tasks": [
     {
@@ -90,6 +92,126 @@
         "عند اكتمال المتطلبات يتم Build ثم Release Gate ثم Deploy ثم Smoke Test وحفظ Artifact ورابط المنتج."
       ],
       "source_intent": "2026-09-01-110000-user-autonomy",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-001",
+      "role": "planner",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "مصدر حقيقة خارجي قابل للاستئناف.",
+      "source_requirement": 1,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971793+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-002",
+      "role": "planner",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Intent دائم لا يضيع بانتهاء المحادثة.",
+      "source_requirement": 2,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971812+00:00",
+      "next": null,
+      "attempts": 1,
+      "updated_at": "2026-09-01T17:55:42.625936+00:00",
+      "proof": "leadership-nbag-model-output-plus-independent-regression",
+      "recovery": {
+        "action": "automatic_retry",
+        "attempt": 1,
+        "max_retries": 3,
+        "time": "2026-09-01T17:55:42.679959+00:00",
+        "reason": "MODEL_BAD_JSON"
+      }
+    },
+    {
+      "id": "INTENT-GAP-003",
+      "role": "planner",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "تخطيط وإنشاء مهام فرعية تلقائيًا.",
+      "source_requirement": 3,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971818+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-004",
+      "role": "builder",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "تنفيذ فعلي مع Model Runner قابل للتبديل.",
+      "source_requirement": 4,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971823+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-005",
+      "role": "tester",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "تحقق مستقل وEvidence لكل نتيجة.",
+      "source_requirement": 5,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971828+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-006",
+      "role": "builder",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Recovery/Retry/Failover مع حدود تمنع الحلقات اللانهائية.",
+      "source_requirement": 6,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971833+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-007",
+      "role": "tester",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Regression/Adversarial/Chaos/Artifact validation.",
+      "source_requirement": 7,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971838+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-008",
+      "role": "release",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Release Gate يمنع النجاح الوهمي.",
+      "source_requirement": 8,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971840+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-009",
+      "role": "release",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Build/Deploy/Smoke Test عند توفر منتج قابل للنشر.",
+      "source_requirement": 9,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971844+00:00",
+      "next": null
+    },
+    {
+      "id": "INTENT-GAP-010",
+      "role": "tester",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "إثبات INTENT_ACHIEVED فقط بعد تحقق النتيجة النهائية.",
+      "source_requirement": 10,
+      "source_intent": "LL-AUTONOMY-001",
+      "created_at": "2026-09-01T17:55:20.971848+00:00",
       "next": null
     }
   ]

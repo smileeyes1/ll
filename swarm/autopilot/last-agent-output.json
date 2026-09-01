@@ -1,0 +1,31 @@
+{
+  "task_id": "INTENT-GAP-002",
+  "status": "failed",
+  "next_task": null,
+  "summary": "MODEL_BAD_JSON",
+  "edits": [],
+  "tests": [
+    {
+      "command": "bash /home/runner/work/ll/ll/tests/test-structure.sh",
+      "returncode": 0,
+      "output": "MODEL_RUNNER_CONTRACT=PASS\nSTRUCTURE=PASS\n"
+    },
+    {
+      "command": "bash /home/runner/work/ll/ll/tests/test-adversarial.sh",
+      "returncode": 0,
+      "output": "PASS empty-file detection primitive\nPASS malformed-data rejection\nPASS missing-artifact detection primitive\nPASS secret-pattern defense\nADVERSARIAL=PASS\n"
+    },
+    {
+      "command": "bash /home/runner/work/ll/ll/tests/test-nbag.sh",
+      "returncode": 0,
+      "output": "NBAG_GATE=PASS\n"
+    },
+    {
+      "command": "bash /home/runner/work/ll/ll/tests/test-leadership.sh",
+      "returncode": 0,
+      "output": "LEADERSHIP_NORMAL=PASS\nLEADERSHIP_HUMAN_GATE=PASS\nLEADERSHIP_MISSING_CORE=PASS\nLEADERSHIP=PASS\n"
+    }
+  ],
+  "evidence": [],
+  "failure_reason": "MODEL_BAD_JSON"
+}

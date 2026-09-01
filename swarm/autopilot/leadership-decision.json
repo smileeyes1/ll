@@ -1,0 +1,272 @@
+{
+  "schema_version": "1.0",
+  "gate": "OMEGA_AUTONOMOUS_LEADERSHIP",
+  "decision_time": "2026-09-01T17:55:20.909382+00:00",
+  "decision": "PROCEED",
+  "reason": "leadership_questions_satisfied_within_current_authority",
+  "rule": "NO_LEADERSHIP_DECISION_NO_NBAG_NO_EXECUTION",
+  "source_of_truth": "repository",
+  "state_status": "AUTONOMOUS_LEADERSHIP_VERIFIED_ASSURANCE",
+  "missing_core_files": [],
+  "critical_unresolved": [],
+  "human_required_task_ids": [],
+  "question_count": 30,
+  "questions": [
+    {
+      "key": "goal",
+      "question": "ما الغاية الحقيقية المطلوب تحقيقها؟",
+      "answer": "تحويل هذا المستودع إلى نظام قيادة وإنتاج مستقل قائم على النوايا: يستقبل الغاية، يفهم المقصد لا الصياغة فقط، يسأل داخليًا أسئلة القرار التشغيلية المناسبة، يحول الغاية إلى متطلبات ومعايير قبول ومهام قابلة للتحقق، يختار أفضل خطوة تالية، ينفذها بالأدوات والنماذج المتاحة، يختبر النتائج ويصلحها ويستأنفها تلقائيًا، ثم يصل إلى منتج أو نتيجة نهائية قابلة للاستخدام والنشر دون اعتماد تشغيلي على محادثة ChatGPT أو الهاتف.",
+      "status": "ANSWERED",
+      "source": "INTENT.md",
+      "critical": true
+    },
+    {
+      "key": "final_outcome",
+      "question": "ما النتيجة النهائية المطلوبة لا مجرد الخطوة التالية؟",
+      "answer": "1. مصدر حقيقة خارجي قابل للاستئناف. 2. Intent دائم لا يضيع بانتهاء المحادثة. 3. تخطيط وإنشاء مهام فرعية تلقائيًا. 4. تنفيذ فعلي مع Model Runner قابل للتبديل. 5. تحقق مستقل وEvidence لكل نتيجة. 6. Recovery/Retry/Failover مع حدود تمنع الحلقات اللانهائية. 7. Regression/Adversarial/Chaos/Artifact validation. 8. Release Gate يمنع النجاح الوهمي. 9. Build/Deploy/Smoke Test عند توفر منتج قابل للنشر. 10. إثبات INTENT_ACHIEVED فقط بعد تحقق النتيجة النهائية.",
+      "status": "ANSWERED",
+      "source": "INTENT.md/SPEC.md",
+      "critical": true
+    },
+    {
+      "key": "success",
+      "question": "كيف نثبت أن المهمة نجحت فعليًا؟",
+      "answer": "1. يمكن لوكيل جديد فهم الغاية والحالة من الملفات دون الرجوع للمحادثة. 2. توجد قيادة إلزامية قبل التنفيذ تنتج قرارًا قابلًا للتدقيق وتفحص أسئلة الغاية والنجاح والمجهولات والقيود والمخاطر والدليل والبدائل والحاجة للإنسان. 3. لا يصل NBAG أو Executor إلى التنفيذ إذا كانت قيادة المهمة SAFE_BLOCKED أو HUMAN_REQUIRED. 4. تُستخدم افتراضات آمنة وقابلة للعكس لتقليل العبء البشري، وتُسجل بدل إخفائها. 5. يوجد فحص صحة قابل للتشغيل محليًا وداخل GitHub Actions. 6. كل اعتماد لأداة له اختبار قدرة فعلي أو حالة UNVERIFIED واضحة. 7. يوجد مسار أساسي ومسار بديل موثق، وRecovery/Failover بميزانية محاولات محدودة. 8. يوجد سجل Evidence يربط الادعاءات بالـcommit والاختبار والـartifact/التشغيل عند انطباقه. 9. توجد اختبار",
+      "status": "ANSWERED",
+      "source": "SPEC.md/AUTONOMY_CONSTITUTION.md",
+      "critical": true
+    },
+    {
+      "key": "facts",
+      "question": "ما الحقائق المثبتة التي يمكن البناء عليها؟",
+      "answer": "state=AUTONOMOUS_LEADERSHIP_VERIFIED_ASSURANCE; completed_tasks=0; evidence_file=present",
+      "status": "ANSWERED",
+      "source": "STATE.md/EVIDENCE.md",
+      "critical": false
+    },
+    {
+      "key": "unknowns",
+      "question": "ما الذي ما زال مجهولًا أو غير متحقق منه؟",
+      "answer": "Legend: VERIFIED = tested; CONFIGURED = implemented but live proof pending; AVAILABLE = documented but not yet tested; UNVERIFIED = do not depend on it.; | Git versioning | VERIFIED | Main commit history is available and recoverable |; | GitHub Pages | AVAILABLE | Not a dependency until enabled and tested |; | Codespaces | AVAILABLE | Not a dependency |; | Cloudflare Pages | UNVERIFIED | Candidate fallback; no critical dependency |; | Netlify | UNVERIFIED | Candidate fallback; no critical dependency |; | Supabase | UNVERIFIED | Candidate backend; no critical dependency |",
+      "status": "ANSWERED",
+      "source": "CAPABILITIES.md",
+      "critical": false
+    },
+    {
+      "key": "constraints",
+      "question": "ما القيود وحدود النطاق والسلطة؟",
+      "answer": "لا يفترض النظام استمرار ChatGPT في الخلفية، ولا يمنح نفسه صلاحيات غير موجودة، ولا يتجاوز سياسات أو حدود خدمة، ولا ينشئ التزامات مالية أو إجراءات عالية الأثر غير القابلة للعكس بلا سلطة صريحة.",
+      "status": "ANSWERED",
+      "source": "SPEC.md/AUTONOMY_CONSTITUTION.md",
+      "critical": true
+    },
+    {
+      "key": "capabilities",
+      "question": "ما القدرات المثبتة المتاحة الآن؟",
+      "answer": "# CAPABILITIES Legend: VERIFIED = tested; CONFIGURED = implemented but live proof pending; AVAILABLE = documented but not yet tested; UNVERIFIED = do not depend on it. | Capability | Status | Proof / policy | |---|---|---| | Public GitHub repository | VERIFIED | Repository metadata and successful writes | | GitHub file read/write | VERIFIED | Multiple successful commits | | Git versioning | VERIFIED | Main commit history is available and recoverable | | GitHub Actions standard runner | VERIFIED | Multiple successful assurance runs | | Pull-request CI | VERIFIED | Proof PR #1 executed successfully | | Actions artifacts | VERIFIED | Assurance artifacts exist with digests | | Ω Autonomous Leade",
+      "status": "ANSWERED",
+      "source": "CAPABILITIES.md",
+      "critical": true
+    },
+    {
+      "key": "bottleneck",
+      "question": "ما الاختناق أو العائق الأعلى أثرًا الآن؟",
+      "answer": "BLOCKER=LIVE_SELF_CHAIN_E2E_PENDING; failed_tasks=0; current_task=prove a live Ω Autonomous Project Loop cycle uses Leadership → NBAG → Executor/Recovery → Continuation and, when CONTINUE, self-dispatches the next cycle without human action",
+      "status": "ANSWERED",
+      "source": "STATE.md/task-queue.json",
+      "critical": false
+    },
+    {
+      "key": "dependencies",
+      "question": "ما التبعيات التي يجب تحققها قبل التنفيذ؟",
+      "answer": "executable_tasks=1; pending_dependencies are enforced by task queue",
+      "status": "ANSWERED",
+      "source": "task-queue.json",
+      "critical": false
+    },
+    {
+      "key": "risk",
+      "question": "ما المخاطر الأعلى أثرًا وكيف نحدها؟",
+      "answer": "تلف الحالة، النجاح الوهمي، حلقات التكرار، الصلاحيات الزائدة، وفشل المسار؛ تخفف بالـEvidence وRegression وRecovery وRelease Gate",
+      "status": "ANSWERED",
+      "source": "AUTONOMY_CONSTITUTION.md/RUNBOOK.md",
+      "critical": false
+    },
+    {
+      "key": "reversibility",
+      "question": "هل الإجراء التالي قابل للعكس؟",
+      "answer": "تغييرات المستودع يجب أن تكون commits صغيرة قابلة للرجوع؛ الإجراءات الخارجية غير القابلة للعكس تحتاج تفويضًا صريحًا أو بوابة أمان",
+      "status": "ANSWERED",
+      "source": "RUNBOOK.md/AUTONOMY_CONSTITUTION.md",
+      "critical": false
+    },
+    {
+      "key": "evidence_plan",
+      "question": "ما الدليل المطلوب قبل اعتبار النجاح؟",
+      "answer": "اختبار فعلي + Evidence + commit ثابت + artifact/تشغيل عند انطباقه؛ لا يكفي وجود الإعداد",
+      "status": "ANSWERED",
+      "source": "EVIDENCE.md/SPEC.md",
+      "critical": true
+    },
+    {
+      "key": "alternatives",
+      "question": "ما البديل إذا فشل المسار الأساسي؟",
+      "answer": "تشخيص ثم إصلاح ثم إعادة اختبار ثم بديل VERIFIED ثم local fallback ثم SAFE_BLOCKED إذا استنفدت البدائل",
+      "status": "ANSWERED",
+      "source": "RUNBOOK.md/DECISIONS.md",
+      "critical": false
+    },
+    {
+      "key": "failure",
+      "question": "ماذا نفعل عند الفشل أو timeout؟",
+      "answer": "نحفظ الدليل، نطبق retry budget، نستخدم Recovery/Failover، نعيد NBAG ولا ندعي النجاح",
+      "status": "ANSWERED",
+      "source": "AUTONOMY_CONSTITUTION.md",
+      "critical": false
+    },
+    {
+      "key": "human",
+      "question": "هل تدخل الإنسان ضروري فعلًا؟",
+      "answer": "لا توجد مهمة تنفيذية موسومة requires_human=true",
+      "status": "ANSWERED",
+      "source": "task-queue.json",
+      "critical": false
+    },
+    {
+      "key": "next_action",
+      "question": "ما آلية اختيار أفضل إجراء تالٍ؟",
+      "answer": "Ω NBAG بعد نجاح بوابة القيادة؛ لا اختيار بحسب ترتيب الطابور فقط",
+      "status": "ANSWERED",
+      "source": "swarm/autopilot/nbag.py",
+      "critical": true
+    },
+    {
+      "key": "stop",
+      "question": "متى يجب أن نستمر ومتى نتوقف؟",
+      "answer": "نستمر حتى INTENT_ACHIEVED/RELEASED بدليل، أو SAFE_BLOCKED حقيقي موثق",
+      "status": "ANSWERED",
+      "source": "AUTONOMY_CONSTITUTION.md",
+      "critical": true
+    },
+    {
+      "key": "delivery.target",
+      "question": "ما هدف البناء/النشر وكيف نتحقق من الوصول إليه؟",
+      "answer": "يجب تحديده من المشروع/القدرات قبل Release Gate؛ Smoke Test إلزامي عند النشر.",
+      "status": "ANSWERED",
+      "source": "dynamic:delivery",
+      "critical": false
+    },
+    {
+      "key": "delivery.rollback",
+      "question": "ما خطة الرجوع إذا فشل الإصدار؟",
+      "answer": "الرجوع إلى Last Known Good Commit/Artifact ومسار نشر سابق مثبت.",
+      "status": "ANSWERED",
+      "source": "dynamic:delivery",
+      "critical": false
+    },
+    {
+      "key": "delivery.smoke",
+      "question": "ما اختبار التشغيل النهائي؟",
+      "answer": "اختبار وصول/تشغيل حقيقي بعد النشر، وليس نجاح build فقط.",
+      "status": "ANSWERED",
+      "source": "dynamic:delivery",
+      "critical": false
+    },
+    {
+      "key": "security.sensitivity",
+      "question": "هل توجد بيانات/أسرار حساسة؟",
+      "answer": "لا توضع الأسرار في المستودع؛ أقل صلاحية لازمة فقط.",
+      "status": "ANSWERED",
+      "source": "dynamic:security",
+      "critical": false
+    },
+    {
+      "key": "security.threat",
+      "question": "ما سطح الهجوم أو إساءة الاستخدام المحتملة؟",
+      "answer": "يُفحص قبل اعتماد أي مسار يتعامل مع هوية أو أسرار أو بيانات.",
+      "status": "ANSWERED",
+      "source": "dynamic:security",
+      "critical": false
+    },
+    {
+      "key": "security.least_privilege",
+      "question": "هل الصلاحيات هي الحد الأدنى؟",
+      "answer": "يجب أن تبقى الصلاحيات محددة ولا يوسعها الوكيل ذاتيًا.",
+      "status": "ANSWERED",
+      "source": "dynamic:security",
+      "critical": false
+    },
+    {
+      "key": "external.availability",
+      "question": "هل الخدمة الخارجية متاحة ومثبتة الصلاحية؟",
+      "answer": "لا تدخل المسار الحرج قبل Capability Proof.",
+      "status": "ANSWERED",
+      "source": "dynamic:external",
+      "critical": false
+    },
+    {
+      "key": "external.limits",
+      "question": "ما حدود الخدمة ومعدلاتها وفشلها المتوقع؟",
+      "answer": "تُعامل كقيد ويجب وجود timeout/retry/fallback.",
+      "status": "ANSWERED",
+      "source": "dynamic:external",
+      "critical": false
+    },
+    {
+      "key": "cost.ceiling",
+      "question": "ما سقف التكلفة؟",
+      "answer": "لا ينشئ النظام التزامًا ماليًا غير مصرح به؛ يفضل المسار المجاني/الأقل كلفة عند تكافؤ القيمة.",
+      "status": "ANSWERED",
+      "source": "dynamic:cost",
+      "critical": false
+    },
+    {
+      "key": "destructive.backup",
+      "question": "هل توجد نسخة/نقطة رجوع قبل الإجراء المدمر؟",
+      "answer": "Backup/Last Known Good مطلوب قبل التغيير غير القابل للعكس.",
+      "status": "ANSWERED",
+      "source": "dynamic:destructive",
+      "critical": false
+    },
+    {
+      "key": "destructive.blast_radius",
+      "question": "ما نطاق الضرر المحتمل؟",
+      "answer": "يُصغّر الإجراء ويُختبر على نطاق محدود أولًا.",
+      "status": "ANSWERED",
+      "source": "dynamic:destructive",
+      "critical": false
+    },
+    {
+      "key": "user_experience.user",
+      "question": "من المستخدم النهائي وما أهم مهمة له؟",
+      "answer": "يُستخرج من النية/المواصفات ويُستخدم في معايير القبول.",
+      "status": "ANSWERED",
+      "source": "dynamic:user_experience",
+      "critical": false
+    },
+    {
+      "key": "user_experience.accessibility",
+      "question": "هل الناتج قابل للاستخدام على البيئة المستهدفة؟",
+      "answer": "التحقق العملي على بيئة/واجهة الهدف جزء من القبول.",
+      "status": "ANSWERED",
+      "source": "dynamic:user_experience",
+      "critical": false
+    }
+  ],
+  "operating_principles": [
+    "intent_over_literal_sequence",
+    "evidence_over_claims",
+    "least_privilege",
+    "reversible_safe_assumptions_before_human_burden",
+    "blocker_first",
+    "repair_before_unrelated_features",
+    "verified_capability_before_unverified_dependency",
+    "bounded_retry_and_failover",
+    "terminal_gate_before_complete"
+  ],
+  "handoff": {
+    "next_gate": "OMEGA_NBAG",
+    "current_task": "prove a live Ω Autonomous Project Loop cycle uses Leadership → NBAG → Executor/Recovery → Continuation and, when CONTINUE, self-dispatches the next cycle without human action",
+    "declared_next_action": "inspect the newest Autopilot run triggered after the Leadership integration; diagnose/repair any failure; capture decision/output/continuation evidence and the automatically spawned next run"
+  }
+}
