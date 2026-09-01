@@ -41,15 +41,27 @@ jobs:
         run: bash tests/test-nbag.sh
       - name: Ω Continuation test
         run: bash tests/test-continuation.sh
+      - name: Stale snapshot checkpoint test
+        run: bash tests/test-stale-checkpoint.sh
       - name: Root adversarial test
         run: bash tests/test-adversarial.sh
-      - name: Project Factory smoke test
+      - name: Project Factory v3 leadership smoke test
         run: |
+          set -euo pipefail
           test -s scripts/project-factory.sh
-          test -d templates/PROJECT
+          test -s templates/PROJECT/AUTONOMY_CONSTITUTION.md
+          test -s templates/PROJECT/INTENT.md
           test -s templates/PROJECT/SPEC.md
           test -s templates/PROJECT/STATE.md
           test -s templates/PROJECT/scripts/release-gate.sh
+          PROBE="assurance-factory-probe-${GITHUB_RUN_ID}"
+          bash scripts/project-factory.sh "$PROBE" 'Build a verified test outcome'
+          cd "projects/$PROBE"
+          grep -q 'Build a verified test outcome' INTENT.md
+          grep -q 'NO LEADERSHIP DECISION' AUTONOMY_CONSTITUTION.md
+          bash tests/test-structure.sh
+          bash tests/test-adversarial.sh
+          bash scripts/release-gate.sh
       - name: Demo project verification
         run: |
           cd projects/demo-project
@@ -75,6 +87,7 @@ jobs:
           bash tests/test-intent-compiler.sh
           bash tests/test-nbag.sh
           bash tests/test-continuation.sh
+          bash tests/test-stale-checkpoint.sh
           bash tests/test-adversarial.sh
           cd projects/demo-project
           bash tests/test-structure.sh
@@ -97,8 +110,9 @@ jobs:
             echo 'Intent-to-Task Compiler: PASS'
             echo 'NBAG Decision Gate: PASS'
             echo 'Continuation: PASS'
+            echo 'Stale Snapshot Safety: PASS'
             echo 'Root Adversarial: PASS'
-            echo 'Factory Smoke: PASS'
+            echo 'Factory v3 Leadership Smoke: PASS'
             echo 'Demo Project: PASS'
             echo 'Autonomous Loop Smoke: PASS'
             echo 'Chaos / Disaster Drill: PASS'
