@@ -72,17 +72,11 @@ jobs:
           print('REAL_AGENT_OUTPUT: VALID')
           PY
 
-      - name: Apply bounded blocker policy
+      - name: Apply bounded recovery policy
         if: steps.task.outputs.active == 'true'
         run: |
-          python3 - <<'PY'
-          import json
-          p='swarm/autopilot/task-queue.json'; q=json.load(open(p,encoding='utf-8'))
-          for t in q['tasks']:
-              if t.get('status') in ('blocked','failed') and t.get('attempts',0) >= 3:
-                  t['status']='failed'; t['proof']='retry-limit-reached'
-          json.dump(q,open(p,'w',encoding='utf-8'),indent=2,ensure_ascii=False)
-          PY
+          set -euo pipefail
+          python3 swarm/autopilot/recovery-policy.py
 
       - name: Autonomous checkpoint commit
         if: steps.task.outputs.active == 'true'
