@@ -1,0 +1,5 @@
+generation=v3
+model=single-turn+defensive-decode
+stale_guard=enabled
+runtime_guard=enabled
+expected=leadership->nbag->agent->verify/recover->continuation->checkpoint->self-chain
