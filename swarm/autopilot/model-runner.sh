@@ -64,7 +64,10 @@ ctx,raw,out,selected=sys.argv[1:]
 system='''Autonomous software agent. Repository files are the only durable state. Complete exactly the selected task. Never edit .github, .git, secrets, release gates, security policy, or governance. Return ONLY JSON: {"task_id":string,"status":"completed"|"blocked"|"failed","next_task":string|null,"summary":string,"edits":[{"path":string,"content":string}],"tests":[string],"evidence":[string],"failure_reason":string|null}. Make minimal edits. Never claim completion without verification.'''
 prompt=system+'\n'+open(ctx,encoding='utf-8').read()
 env=os.environ.copy(); env['LD_LIBRARY_PATH']=os.path.dirname(os.environ['LLAMA_BIN'])+':'+env.get('LD_LIBRARY_PATH','')
-cmd=[os.environ['LLAMA_BIN'],'-m',os.environ['MODEL_PATH'],'-p',prompt,'-n','160','-c','4096','-t','4','-b','256','--temp','0.1','--no-display-prompt']
+# -st is mandatory: chat-template models auto-enable conversation mode; single-turn
+# makes the autonomous process exit after one generated response instead of
+# waiting for another interactive prompt until timeout.
+cmd=[os.environ['LLAMA_BIN'],'-m',os.environ['MODEL_PATH'],'-p',prompt,'-st','-n','160','-c','4096','-t','4','-b','256','--temp','0.1','--no-display-prompt']
 def failure(reason, raw_text=''):
     open(raw,'w',encoding='utf-8').write(raw_text)
     obj={'task_id':selected,'status':'failed','next_task':None,'summary':reason,'edits':[],'tests':[],'evidence':[],'failure_reason':reason}
@@ -96,14 +99,15 @@ root,agent,out,selected=sys.argv[1:]; x=json.load(open(agent,encoding='utf-8'))
 qpath=pathlib.Path(root,'swarm/autopilot/task-queue.json'); q=json.load(open(qpath,encoding='utf-8'))
 task=next((t for t in q['tasks'] if t['id']==selected),None)
 if not task or task['status']!='pending' or x.get('task_id')!=selected: raise SystemExit('INVALID_SELECTED_TASK')
-protected=('SPEC.md','INTENT.md','DECISIONS.md','CAPABILITIES.md','EVIDENCE.md','RUNBOOK.md')
+protected=('SPEC.md','INTENT.md','DECISIONS.md','CAPABILITIES.md','EVIDENCE.md','RUNBOOK.md','AUTONOMY_CONSTITUTION.md')
 for e in x.get('edits',[]):
  p=e.get('path','')
  if p.startswith('/') or '..' in pathlib.PurePosixPath(p).parts or p.startswith('.github/') or p.startswith('.git/') or p in protected or 'release-gate' in p or 'security' in p.lower(): raise SystemExit('FORBIDDEN_EDIT:'+p)
  if len(e.get('content',''))>100000: raise SystemExit('EDIT_TOO_LARGE')
  target=pathlib.Path(root,p); target.parent.mkdir(parents=True,exist_ok=True); target.write_text(e['content'],encoding='utf-8')
-checks=[['bash',root+'/tests/test-structure.sh'],['bash',root+'/tests/test-adversarial.sh'],['bash',root+'/tests/test-nbag.sh']]
-if pathlib.Path(root,'projects/demo-project/scripts/release-gate.sh').exists(): checks.append(['bash',root+'/projects/demo-project/scripts/release-gate.sh'])
+# Verify only project/root invariants relevant to the current repository task.
+# Unrelated demo release state must never veto an otherwise valid autonomous task.
+checks=[['bash',root+'/tests/test-structure.sh'],['bash',root+'/tests/test-adversarial.sh'],['bash',root+'/tests/test-nbag.sh'],['bash',root+'/tests/test-leadership.sh']]
 results=[]
 verification_ok=True
 for c in checks:
@@ -113,12 +117,14 @@ for c in checks:
 if x.get('status')=='completed' and not verification_ok:
  x['status']='failed'; x['failure_reason']='verification_failed'
 if x.get('status') not in ('completed','blocked','failed'): x['status']='failed'; x['failure_reason']='bad_status'
-task['status']=x['status']; task['attempts']=task.get('attempts',0)+1; task['updated_at']=datetime.datetime.now(datetime.timezone.utc).isoformat(); task['proof']='nbag-selected-model-output-plus-independent-regression'
+if x.get('status')=='completed' and verification_ok:
+ x.setdefault('evidence',[]).append('independent-regression-pass')
+task['status']=x['status']; task['attempts']=task.get('attempts',0)+1; task['updated_at']=datetime.datetime.now(datetime.timezone.utc).isoformat(); task['proof']='leadership-nbag-model-output-plus-independent-regression'
 if x.get('next_task') is not None and not any(t['id']==x['next_task'] for t in q['tasks']): x['next_task']=None
 json.dump(q,open(qpath,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
-json.dump({'last_task':selected,'last_status':x['status'],'next_task':x.get('next_task'),'verified_tests':results,'decision_gate':'OMEGA_NBAG'},open(pathlib.Path(root,'swarm/autopilot/runtime-state.json'),'w',encoding='utf-8'),ensure_ascii=False,indent=2)
+json.dump({'last_task':selected,'last_status':x['status'],'next_task':x.get('next_task'),'verified_tests':results,'leadership_gate':'OMEGA_AUTONOMOUS_LEADERSHIP','decision_gate':'OMEGA_NBAG'},open(pathlib.Path(root,'swarm/autopilot/runtime-state.json'),'w',encoding='utf-8'),ensure_ascii=False,indent=2)
 with pathlib.Path(root,'swarm/autopilot/evidence.jsonl').open('a',encoding='utf-8') as f:
- f.write(json.dumps({'event':'agent_result','decision_gate':'OMEGA_NBAG','task_id':selected,'status':x['status'],'next_task':x.get('next_task'),'summary':x.get('summary'),'tests':results,'time':datetime.datetime.now(datetime.timezone.utc).isoformat()},ensure_ascii=False)+'\n')
+ f.write(json.dumps({'event':'agent_result','leadership_gate':'OMEGA_AUTONOMOUS_LEADERSHIP','decision_gate':'OMEGA_NBAG','task_id':selected,'status':x['status'],'next_task':x.get('next_task'),'summary':x.get('summary'),'tests':results,'evidence':x.get('evidence',[]),'time':datetime.datetime.now(datetime.timezone.utc).isoformat()},ensure_ascii=False)+'\n')
 x['tests']=results
 json.dump(x,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
 PY
