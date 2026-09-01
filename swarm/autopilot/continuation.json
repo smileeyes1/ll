@@ -9,7 +9,6 @@
     "INTENT-GAP-003",
     "INTENT-GAP-004",
     "INTENT-GAP-005",
-    "INTENT-GAP-006",
     "INTENT-GAP-007",
     "INTENT-GAP-008",
     "INTENT-GAP-009",
@@ -27,14 +26,14 @@
     "INTENT-GAP-003",
     "INTENT-GAP-004",
     "INTENT-GAP-005",
-    "INTENT-GAP-006",
     "INTENT-GAP-007",
     "INTENT-GAP-008",
     "INTENT-GAP-009",
     "INTENT-GAP-010"
   ],
   "failed_task_ids": [
-    "INTENT-GAP-002"
+    "INTENT-GAP-002",
+    "INTENT-GAP-006"
   ],
   "rule": "CONTINUE_UNTIL_TERMINAL_OR_SAFE_BLOCKED"
 }
