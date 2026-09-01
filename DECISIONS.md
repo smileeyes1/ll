@@ -23,3 +23,20 @@ Status: FROZEN
 ## D-006 — Optional services remain optional until Capability Proof passes
 Candidates: GitHub Pages, Cloudflare Pages, Netlify, Supabase, Codespaces.
 Status: UNVERIFIED / NOT REQUIRED
+
+## D-007 — Autonomous Leadership is mandatory before NBAG
+Reason: choosing a task is not enough; the system must first verify intent, success criteria, unknowns, authority, capability, risk, reversibility, evidence and stop conditions.
+Invariant: NO LEADERSHIP DECISION → NO NBAG → NO EXECUTION.
+Status: FROZEN
+
+## D-008 — Human intervention is an exception, not the default
+Reason: unnecessary questions destroy autonomy. Safe reversible assumptions are preferred and recorded. HUMAN_REQUIRED is allowed only for missing authority/secret, irreducible preference, or high-impact irreversible action that cannot be safely inferred.
+Status: FROZEN
+
+## D-009 — Re-evaluate after every material result
+Reason: a plan is provisional. New evidence can change the best action. The system must return to Leadership → NBAG after execution/recovery instead of blindly following stale queue order.
+Status: FROZEN
+
+## D-010 — Completion is mission-level, not task-level
+Reason: completing one task does not prove the user's intent. The loop stops only at a verified terminal outcome or a real SAFE_BLOCKED state with evidence.
+Status: FROZEN
