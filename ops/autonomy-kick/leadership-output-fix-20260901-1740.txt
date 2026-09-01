@@ -1,0 +1,3 @@
+reason=verify-autonomous-leadership-live-cycle
+fix=leadership-diagnostic-output-format
+expected=Leadership->NBAG->Execute/Recovery->Continuation->Self-Chain
