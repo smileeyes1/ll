@@ -32,6 +32,9 @@ jobs:
           if [ ${#files[@]} -eq 0 ]; then echo 'No pending intents'; exit 0; fi
           python3 - <<'PY'
           import json, glob, os, datetime
+          qpath='swarm/autopilot/task-queue.json'
+          q=json.load(open(qpath,encoding='utf-8'))
+          pending=[t['id'] for t in q['tasks'] if t['status'] not in ('completed','failed')]
           os.makedirs('ops/intents/processed', exist_ok=True)
           for p in glob.glob('ops/intents/inbox/*.json'):
               with open(p, encoding='utf-8') as f: x=json.load(f)
@@ -39,23 +42,28 @@ jobs:
                   if k not in x: raise SystemExit(f'MALFORMED_INTENT: {p}: missing {k}')
               if not isinstance(x['acceptance_criteria'], list) or not x['acceptance_criteria']:
                   raise SystemExit(f'MALFORMED_INTENT: {p}: acceptance_criteria must be non-empty')
+              tid='INTENT-'+str(x['intent_id'])
+              if any(t['id']==tid for t in q['tasks']):
+                  raise SystemExit(f'DUPLICATE_INTENT: {x["intent_id"]}')
+              q['tasks'].append({'id':tid,'role':'orchestrator','status':'pending','depends_on':pending[:],'goal':x['goal'],'acceptance_criteria':x['acceptance_criteria'],'source_intent':x['intent_id'],'next':None})
               x['status']='normalized'
               x['normalized_at']=datetime.datetime.now(datetime.timezone.utc).isoformat()
               out='ops/intents/processed/'+os.path.basename(p)
               with open(out,'w',encoding='utf-8') as f: json.dump(x,f,indent=2,ensure_ascii=False)
               os.remove(p)
+          with open(qpath,'w',encoding='utf-8') as f: json.dump(q,f,indent=2,ensure_ascii=False)
           PY
-
-      - name: Start autonomous execution
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run autopilot.yml --ref main
 
       - name: Commit intent state
         run: |
           set -e
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/intents
-          git diff --cached --quiet || git commit -m 'chore: normalize incoming intents'
+          git add ops/intents swarm/autopilot/task-queue.json
+          git diff --cached --quiet || git commit -m 'chore: normalize incoming intent and enqueue work'
           git push
+
+      - name: Start autonomous execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run autopilot.yml --ref main
