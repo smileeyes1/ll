@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-required=(AUTONOMY_CONSTITUTION.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md CHANGELOG.md INTENT.md .github/workflows/assurance.yml .github/workflows/autopilot.yml scripts/health-check.sh scripts/intent-gate.sh swarm/autopilot/leadership-core.py swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py swarm/autopilot/checkpoint.sh tests/test-structure.sh tests/test-adversarial.sh tests/test-leadership.sh tests/test-intent-gate.sh tests/test-intent-compiler.sh tests/test-nbag.sh tests/test-continuation.sh tests/test-stale-checkpoint.sh)
+required=(AUTONOMY_CONSTITUTION.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md CHANGELOG.md INTENT.md .github/workflows/assurance.yml .github/workflows/autopilot.yml scripts/health-check.sh scripts/intent-gate.sh swarm/autopilot/leadership-core.py swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py swarm/autopilot/checkpoint.sh swarm/autopilot/model-runner.sh tests/test-structure.sh tests/test-adversarial.sh tests/test-leadership.sh tests/test-intent-gate.sh tests/test-intent-compiler.sh tests/test-nbag.sh tests/test-continuation.sh tests/test-stale-checkpoint.sh tests/test-model-runner-contract.sh)
 fail=0
 for f in "${required[@]}"; do
   [ -s "$ROOT/$f" ] || { echo "FAIL missing: $f"; fail=1; }
@@ -21,4 +21,5 @@ grep -q 'CONTINUE_UNTIL_TERMINAL_OR_SAFE_BLOCKED' "$ROOT/swarm/autopilot/continu
 grep -q 'leadership_decision' "$ROOT/swarm/autopilot/continuation.py" || { echo 'FAIL continuation ignores leadership'; fail=1; }
 grep -q 'STALE_SNAPSHOT' "$ROOT/swarm/autopilot/checkpoint.sh" || { echo 'FAIL stale checkpoint guard missing'; fail=1; }
 grep -q 'git reset --hard origin/main' "$ROOT/swarm/autopilot/checkpoint.sh" || { echo 'FAIL safe stale reset missing'; fail=1; }
+grep -q "'-st'" "$ROOT/swarm/autopilot/model-runner.sh" || { echo 'FAIL model runner single-turn missing'; fail=1; }
 if [ "$fail" -eq 0 ]; then echo 'STRUCTURE=PASS'; exit 0; else echo 'STRUCTURE=FAIL'; exit 1; fi
