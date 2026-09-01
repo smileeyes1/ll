@@ -29,7 +29,12 @@ jobs:
       - name: Read durable project state
         run: |
           set -euo pipefail
-          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/nbag.py; do test -s "$f"; done
+          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py; do test -s "$f"; done
+
+      - name: Compile intent gaps into tasks
+        run: |
+          set -euo pipefail
+          python3 swarm/autopilot/intent-compiler.py
 
       - name: Ω NBAG mandatory decision gate
         id: nbag
@@ -127,6 +132,6 @@ jobs:
             echo '# Autonomous Terminal State'
             echo
             echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo 'NBAG found no executable action.'
+            echo 'Intent compiler found no missing task and NBAG found no executable action.'
           } > artifacts/autonomous-terminal.md
           echo 'NO_EXECUTABLE_ACTION: no main-branch commit is created.'
