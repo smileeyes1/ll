@@ -33,6 +33,8 @@ jobs:
         run: bash scripts/intent-gate.sh
       - name: Intent gate regression test
         run: bash tests/test-intent-gate.sh
+      - name: Intent-to-task compiler test
+        run: bash tests/test-intent-compiler.sh
       - name: Ω NBAG decision gate test
         run: bash tests/test-nbag.sh
       - name: Root adversarial test
@@ -65,6 +67,7 @@ jobs:
           bash scripts/health-check.sh
           bash tests/test-structure.sh
           bash tests/test-intent-gate.sh
+          bash tests/test-intent-compiler.sh
           bash tests/test-nbag.sh
           bash tests/test-adversarial.sh
           cd projects/demo-project
@@ -84,6 +87,7 @@ jobs:
             echo 'Root Structure: PASS'
             echo 'Intent Gate: PASS'
             echo 'Intent Gate Regression: PASS'
+            echo 'Intent-to-Task Compiler: PASS'
             echo 'NBAG Decision Gate: PASS'
             echo 'Root Adversarial: PASS'
             echo 'Factory Smoke: PASS'
