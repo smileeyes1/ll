@@ -4,7 +4,6 @@
   "reason": "terminal_failed_task",
   "leadership_decision": "PROCEED",
   "executable_task_ids": [
-    "SWARM-001",
     "INTENT-GAP-004",
     "INTENT-GAP-005",
     "INTENT-GAP-007",
@@ -13,7 +12,6 @@
     "INTENT-GAP-010"
   ],
   "pending_task_ids": [
-    "SWARM-001",
     "SWARM-002",
     "SWARM-003",
     "SWARM-004",
@@ -28,6 +26,7 @@
     "INTENT-GAP-010"
   ],
   "failed_task_ids": [
+    "SWARM-001",
     "INTENT-GAP-001",
     "INTENT-GAP-002",
     "INTENT-GAP-003",

@@ -11,13 +11,13 @@
     {
       "id": "SWARM-001",
       "role": "planner",
-      "status": "pending",
+      "status": "failed",
       "depends_on": [],
       "goal": "Validate project objective and acceptance criteria",
       "next": "SWARM-002",
-      "attempts": 2,
-      "updated_at": "2026-09-01T18:00:02.039101+00:00",
-      "proof": "leadership-nbag-schema-constrained-model-output-plus-independent-regression",
+      "attempts": 3,
+      "updated_at": "2026-09-01T21:29:17.779281+00:00",
+      "proof": "retry-limit-reached",
       "recovery": {
         "action": "automatic_retry",
         "attempt": 2,

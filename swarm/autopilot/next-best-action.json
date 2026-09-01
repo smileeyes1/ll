@@ -1,19 +1,11 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_NBAG",
-  "decision_time": "2026-09-01T21:26:37.394565+00:00",
+  "decision_time": "2026-09-01T21:29:18.246453+00:00",
   "intent_present": true,
   "state_present": true,
-  "candidate_count": 7,
+  "candidate_count": 6,
   "candidates": [
-    {
-      "task_id": "SWARM-001",
-      "score": 74,
-      "reasons": [
-        "role_value=90",
-        "retry_penalty=-16"
-      ]
-    },
     {
       "task_id": "INTENT-GAP-004",
       "score": 72,
@@ -64,7 +56,7 @@
       ]
     }
   ],
-  "selected_task_id": "SWARM-001",
+  "selected_task_id": "INTENT-GAP-004",
   "decision": "EXECUTE",
   "rule": "NO_VERIFIED_DECISION_NO_EXECUTION"
 }
