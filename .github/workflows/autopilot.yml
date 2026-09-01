@@ -20,7 +20,7 @@ jobs:
   autopilot:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,22 +28,19 @@ jobs:
 
       - name: Read durable project state
         run: |
-          test -s SPEC.md
-          test -s STATE.md
-          test -s DECISIONS.md
-          test -s CAPABILITIES.md
-          test -s EVIDENCE.md
-          test -s swarm/autopilot/task-queue.json
+          set -e
+          for f in SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json; do test -s "$f"; done
 
       - name: Detect executable task
         id: task
         run: |
-          python3 - <<'PY'
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           q=json.load(open('swarm/autopilot/task-queue.json'))
           done={t['id'] for t in q['tasks'] if t['status']=='completed'}
           active=next((t for t in q['tasks'] if t['status']=='pending' and all(d in done for d in t['depends_on'])),None)
           print('active='+('true' if active else 'false'))
+          print('task_id='+(active['id'] if active else ''))
           PY
 
       - name: Cache local model
@@ -64,10 +61,10 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          p='swarm/autopilot/last-agent-output.json'
-          x=json.load(open(p))
+          p='swarm/autopilot/last-agent-output.json'; x=json.load(open(p))
           required=['task_id','status','next_task','summary','edits','tests','evidence','failure_reason']
           assert all(k in x for k in required)
+          assert x['task_id']=='${{ steps.task.outputs.task_id }}'
           assert x['status'] in ('completed','blocked','failed')
           assert x['evidence'] or x['status'] != 'completed'
           assert all(isinstance(e,dict) and 'path' in e and 'content' in e for e in x['edits'])
@@ -81,20 +78,25 @@ jobs:
           import json
           p='swarm/autopilot/task-queue.json'; q=json.load(open(p))
           for t in q['tasks']:
-              if t['status']=='blocked' and t.get('attempts',0) >= 3:
-                  t['status']='failed'; t['proof']='blocked-too-many-attempts'
+              if t['status'] in ('blocked','failed') and t.get('attempts',0) >= 3:
+                  t['status']='failed'; t['proof']='retry-limit-reached'
           json.dump(q,open(p,'w'),indent=2,ensure_ascii=False)
           PY
 
       - name: Autonomous checkpoint commit
         if: steps.task.outputs.active == 'true'
         run: |
+          set -e
           mkdir -p ops
           cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add swarm/autopilot/task-queue.json swarm/autopilot/runtime-state.json swarm/autopilot/evidence.jsonl swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
-          git diff --cached --quiet || git commit -m 'chore: autonomous agent task checkpoint'
+          git add -A
+          # Never permit generated changes to CI/security governance from the agent.
+          if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
+            echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'; exit 1
+          fi
+          git diff --cached --quiet || git commit -m "chore: autonomous agent task checkpoint (${{ steps.task.outputs.task_id }})"
           git push
 
       - name: Dispatch next assurance cycle
