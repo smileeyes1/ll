@@ -29,6 +29,8 @@ jobs:
         run: bash scripts/health-check.sh
       - name: Root structure test
         run: bash tests/test-structure.sh
+      - name: Ω Autonomous leadership gate test
+        run: bash tests/test-leadership.sh
       - name: Intent achievement gate
         run: bash scripts/intent-gate.sh
       - name: Intent gate regression test
@@ -37,7 +39,7 @@ jobs:
         run: bash tests/test-intent-compiler.sh
       - name: Ω NBAG decision gate test
         run: bash tests/test-nbag.sh
-      - name: Autonomous continuation self-chain test
+      - name: Ω Continuation test
         run: bash tests/test-continuation.sh
       - name: Root adversarial test
         run: bash tests/test-adversarial.sh
@@ -68,6 +70,7 @@ jobs:
         run: |
           bash scripts/health-check.sh
           bash tests/test-structure.sh
+          bash tests/test-leadership.sh
           bash tests/test-intent-gate.sh
           bash tests/test-intent-compiler.sh
           bash tests/test-nbag.sh
@@ -88,11 +91,12 @@ jobs:
             echo "Ref: $GITHUB_REF"
             echo 'Root Health: PASS'
             echo 'Root Structure: PASS'
+            echo 'Autonomous Leadership: PASS'
             echo 'Intent Gate: PASS'
             echo 'Intent Gate Regression: PASS'
             echo 'Intent-to-Task Compiler: PASS'
             echo 'NBAG Decision Gate: PASS'
-            echo 'Autonomous Continuation Self-Chain: PASS'
+            echo 'Continuation: PASS'
             echo 'Root Adversarial: PASS'
             echo 'Factory Smoke: PASS'
             echo 'Demo Project: PASS'
