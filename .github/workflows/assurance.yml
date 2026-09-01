@@ -65,7 +65,7 @@ jobs:
           retention-days: 30
 
       - name: Record continuity checkpoint
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
           mkdir -p ops
           {
@@ -73,6 +73,7 @@ jobs:
             echo
             echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "Commit checked: $GITHUB_SHA"
+            echo "Run: $GITHUB_RUN_ID"
             echo 'Health: PASS'
             echo 'Structure: PASS'
             echo 'Adversarial: PASS'
