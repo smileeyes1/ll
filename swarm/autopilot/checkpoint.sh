@@ -27,8 +27,13 @@ fi
 
 [ -n "${GITHUB_OUTPUT:-}" ] && echo 'stale=false' >> "$GITHUB_OUTPUT"
 git add -A
-if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
+STAGED="$(git diff --cached --name-only)"
+if printf '%s\n' "$STAGED" | grep -E '^\.github/|^\.git/' >/dev/null; then
   echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'
+  exit 1
+fi
+if printf '%s\n' "$STAGED" | grep -E '^swarm/autopilot/runtime/|\.gguf$' >/dev/null; then
+  echo 'FORBIDDEN_AUTONOMOUS_RUNTIME_ARTIFACT'
   exit 1
 fi
 if git diff --cached --quiet; then
@@ -43,8 +48,5 @@ if ! git push; then
   echo 'CHECKPOINT_PUSH_RACE: remote advanced; abandoning local checkpoint and requesting fresh cycle'
   git reset --hard origin/main
   git clean -fd
-  [ -n "${GITHUB_OUTPUT:-}" ] && {
-    # Last assignment wins for GitHub step output.
-    echo 'stale=true' >> "$GITHUB_OUTPUT"
-  }
+  [ -n "${GITHUB_OUTPUT:-}" ] && echo 'stale=true' >> "$GITHUB_OUTPUT"
 fi
