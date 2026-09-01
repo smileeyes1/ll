@@ -1,0 +1,84 @@
+name: Ω Autonomy Watchdog
+
+on:
+  workflow_run:
+    workflows: ["Ω Autonomous Project Loop"]
+    types: [completed]
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: autonomy-watchdog
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout durable state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Inspect queue
+        id: queue
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          q=json.load(open('swarm/autopilot/task-queue.json'))
+          done={t['id'] for t in q['tasks'] if t['status']=='completed'}
+          active=next((t for t in q['tasks'] if t['status']=='pending' and all(d in done for d in t.get('depends_on',[]))),None)
+          print('active='+('true' if active else 'false'))
+          print('task_id='+(active['id'] if active else ''))
+          PY
+
+      - name: Find currently active autopilot run
+        id: active
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          runs="$(gh api 'repos/${{ github.repository }}/actions/workflows/autopilot.yml/runs?per_page=10')"
+          python3 - "$runs" <<'PY' >> "$GITHUB_OUTPUT"
+          import json,sys
+          x=json.loads(sys.argv[1])
+          active=any(r['status'] in ('queued','in_progress','waiting','requested') for r in x.get('workflow_runs',[]))
+          print('active='+('true' if active else 'false'))
+          PY
+
+      - name: Apply bounded recovery
+        if: steps.queue.outputs.active == 'true' && steps.active.outputs.active != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          runs="$(gh api 'repos/${{ github.repository }}/actions/workflows/autopilot.yml/runs?per_page=20')"
+          python3 - "$runs" <<'PY'
+          import json,sys,datetime
+          x=json.loads(sys.argv[1])
+          now=datetime.datetime.now(datetime.timezone.utc)
+          recent=[]
+          for r in x.get('workflow_runs',[]):
+              if r.get('status')!='completed': continue
+              ts=r.get('updated_at') or r.get('created_at')
+              try: dt=datetime.datetime.fromisoformat(ts.replace('Z','+00:00'))
+              except: continue
+              if (now-dt).total_seconds() <= 1800 and r.get('conclusion') in ('failure','cancelled','timed_out'):
+                  recent.append(r)
+          print('recent_autopilot_failures_30m=',len(recent))
+          if len(recent) >= 3:
+              print('RECOVERY_BUDGET_EXHAUSTED')
+              raise SystemExit(20)
+          PY
+          gh workflow run autopilot.yml --ref main
+          echo 'AUTOPILOT_RECOVERY_DISPATCHED'
+
+      - name: No-op when healthy or no work
+        if: steps.queue.outputs.active != 'true' || steps.active.outputs.active == 'true'
+        run: echo 'WATCHDOG_NO_ACTION'
