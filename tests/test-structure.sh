@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-required=(SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md CHANGELOG.md .github/workflows/assurance.yml scripts/health-check.sh tests/test-structure.sh tests/test-adversarial.sh)
+required=(SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md CHANGELOG.md INTENT.md .github/workflows/assurance.yml scripts/health-check.sh scripts/intent-gate.sh tests/test-structure.sh tests/test-adversarial.sh tests/test-intent-gate.sh)
 fail=0
 for f in "${required[@]}"; do
   [ -s "$ROOT/$f" ] || { echo "FAIL missing: $f"; fail=1; }
