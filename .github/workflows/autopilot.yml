@@ -47,6 +47,10 @@ jobs:
           assert x['decision'] in ('PROCEED','HUMAN_REQUIRED','SAFE_BLOCKED')
           assert x['question_count'] >= 17
           print('decision='+x['decision'])
+          PY
+          python3 - <<'PY'
+          import json
+          x=json.load(open('swarm/autopilot/leadership-decision.json',encoding='utf-8'))
           print('LEADERSHIP_DECISION:',x['decision'],'QUESTIONS:',x['question_count'])
           PY
 
