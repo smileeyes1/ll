@@ -32,7 +32,7 @@ jobs:
       - name: Read durable project state
         run: |
           set -euo pipefail
-          for f in AUTONOMY_CONSTITUTION.md INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md swarm/autopilot/task-queue.json swarm/autopilot/leadership-core.py swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py; do test -s "$f"; done
+          for f in AUTONOMY_CONSTITUTION.md INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md swarm/autopilot/task-queue.json swarm/autopilot/leadership-core.py swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py swarm/autopilot/checkpoint.sh; do test -s "$f"; done
 
       - name: Ω Autonomous Leadership mandatory gate
         id: lead
@@ -151,6 +151,7 @@ jobs:
           bash tests/test-intent-gate.sh
           bash tests/test-nbag.sh
           bash tests/test-continuation.sh
+          bash tests/test-stale-checkpoint.sh
           bash tests/test-adversarial.sh
 
       - name: Terminal candidate verification
@@ -164,6 +165,7 @@ jobs:
           bash tests/test-intent-gate.sh
           bash tests/test-nbag.sh
           bash tests/test-continuation.sh
+          bash tests/test-stale-checkpoint.sh
           bash tests/test-adversarial.sh
           if [ -x projects/demo-project/scripts/release-gate.sh ]; then
             bash projects/demo-project/scripts/release-gate.sh
@@ -190,28 +192,22 @@ jobs:
           esac
 
       - name: Autonomous checkpoint commit
+        id: checkpoint
+        env:
+          AUTONOMY_TASK_ID: ${{ steps.nbag.outputs.task_id }}
         run: |
           set -euo pipefail
-          mkdir -p ops
-          test ! -f swarm/autopilot/last-agent-output.json || cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
-          test ! -f swarm/autopilot/next-best-action.json || cp swarm/autopilot/next-best-action.json ops/next-best-action.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
-            echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'; exit 1
-          fi
-          git diff --cached --quiet || git commit -m "chore: autonomous leadership checkpoint (${{ steps.nbag.outputs.task_id || 'no-task' }})"
-          git push
+          chmod +x swarm/autopilot/checkpoint.sh
+          bash swarm/autopilot/checkpoint.sh
 
       - name: Dispatch assurance evidence cycle
-        if: steps.cont.outputs.decision != 'SAFE_BLOCKED' && success()
+        if: steps.checkpoint.outputs.stale != 'true' && steps.cont.outputs.decision != 'SAFE_BLOCKED' && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run assurance.yml --ref main
 
       - name: Dispatch immediate next autonomous cycle
-        if: steps.cont.outputs.decision == 'CONTINUE' && success()
+        if: (steps.cont.outputs.decision == 'CONTINUE' || steps.checkpoint.outputs.stale == 'true') && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -219,9 +215,9 @@ jobs:
           gh workflow run autopilot.yml --ref main
 
       - name: Safe blocked terminal
-        if: steps.cont.outputs.decision == 'SAFE_BLOCKED'
+        if: steps.checkpoint.outputs.stale != 'true' && steps.cont.outputs.decision == 'SAFE_BLOCKED'
         run: echo 'AUTONOMY=SAFE_BLOCKED; evidence persisted; no automatic next cycle.'
 
       - name: Terminal candidate reached
-        if: steps.cont.outputs.decision == 'TERMINAL_CANDIDATE'
+        if: steps.checkpoint.outputs.stale != 'true' && steps.cont.outputs.decision == 'TERMINAL_CANDIDATE'
         run: echo 'AUTONOMY=TERMINAL_CANDIDATE; terminal gates passed for this cycle; no invented task.'
