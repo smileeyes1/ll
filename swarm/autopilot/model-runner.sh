@@ -12,18 +12,26 @@ LLAMA_URL="https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-
 LLAMA_SHA="91d7b03ddae498a39f28fdb85d84d2b4a0fd3838d10b4f897e0ef8975bb9b583"
 mkdir -p "$MODEL_DIR" "$BIN_DIR" "$RUNTIME"
 install_llama() {
-  if [ -x "$BIN" ]; then return; fi
   local archive="$RUNTIME/llama.tar.gz"
-  curl -fsSL --retry 4 --retry-delay 2 "$LLAMA_URL" -o "$archive"
-  echo "$LLAMA_SHA  $archive" | sha256sum -c -
-  rm -rf "$RUNTIME/llama-extract"
-  mkdir -p "$RUNTIME/llama-extract"
-  tar -xzf "$archive" -C "$RUNTIME/llama-extract"
-  local found
-  found=$(find "$RUNTIME/llama-extract" -type f -name llama-cli | head -1)
-  test -n "$found"
-  cp "$found" "$BIN"
-  chmod +x "$BIN"
+  if [ -x "$BIN" ]; then
+    export LD_LIBRARY_PATH="$BIN_DIR:${LD_LIBRARY_PATH:-}"
+    "$BIN" --version >/dev/null 2>&1 || rm -f "$BIN"
+  fi
+  if [ ! -x "$BIN" ]; then
+    curl -fsSL --retry 4 --retry-delay 2 "$LLAMA_URL" -o "$archive"
+    echo "$LLAMA_SHA  $archive" | sha256sum -c -
+    rm -rf "$RUNTIME/llama-extract"
+    mkdir -p "$RUNTIME/llama-extract"
+    tar -xzf "$archive" -C "$RUNTIME/llama-extract"
+    local found src
+    found=$(find "$RUNTIME/llama-extract" -type f -name llama-cli | head -1)
+    test -n "$found"
+    src="$(dirname "$found")"
+    cp "$src/llama-cli" "$BIN_DIR/"
+    find "$src" -maxdepth 1 -type f \( -name '*.so' -o -name '*.so.*' \) -exec cp -f {} "$BIN_DIR/" \;
+    chmod +x "$BIN"
+  fi
+  export LD_LIBRARY_PATH="$BIN_DIR:${LD_LIBRARY_PATH:-}"
   "$BIN" --version >/dev/null
 }
 install_model() {
@@ -54,7 +62,8 @@ ctx,raw,out,root=sys.argv[1:]
 system='''You are an autonomous software project agent. Repository state is authoritative; chat history does not exist. Complete exactly ONE active task. You may propose edits only to project files and evidence/state files; NEVER edit .github workflows, secrets, release-gate rules, or security policy. Do not claim completion without concrete verification. Return ONLY one JSON object, no markdown. Schema: {"task_id":string,"status":"completed"|"blocked"|"failed","next_task":string|null,"summary":string,"edits":[{"path":string,"content":string}],"tests":[string],"evidence":[string],"failure_reason":string|null}. If no safe task can be completed, use blocked. Keep edits minimal and valid.'''
 prompt=system+'\n\n'+open(ctx,encoding='utf-8').read()
 cmd=[os.environ['LLAMA_BIN'],'-m',os.environ['MODEL_PATH'],'-p',prompt,'-n','1200','--temp','0.1','--no-display-prompt']
-r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=600)
+env=os.environ.copy(); env['LD_LIBRARY_PATH']=os.path.dirname(os.environ['LLAMA_BIN'])+':'+env.get('LD_LIBRARY_PATH','')
+r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=600,env=env)
 open(raw,'w',encoding='utf-8').write(r.stdout)
 if r.returncode!=0: raise SystemExit('MODEL_EXIT:'+str(r.returncode))
 text=r.stdout; start=text.find('{'); end=text.rfind('}')
@@ -66,7 +75,7 @@ if obj['status'] not in ('completed','blocked','failed'): raise SystemExit('BAD_
 json.dump(obj,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
 PY
 python3 - "$ROOT" "$RUNTIME/agent.json" "$ROOT/swarm/autopilot/last-agent-output.json" <<'PY'
-import json,sys,subprocess,pathlib,hashlib,datetime
+import json,sys,subprocess,pathlib,datetime
 root,agent,out=sys.argv[1:]
 x=json.load(open(agent,encoding='utf-8'))
 qpath=pathlib.Path(root,'swarm/autopilot/task-queue.json'); q=json.load(open(qpath,encoding='utf-8'))
@@ -86,17 +95,13 @@ for c in checks:
     results.append({'command':' '.join(c),'returncode':r.returncode,'output':r.stdout[-4000:]})
     if r.returncode!=0:
         x['status']='failed'; x['failure_reason']='verification_failed'; x['tests']=results; json.dump(x,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=2); raise SystemExit(1)
-if x['status']=='completed':
-    task['status']='completed'
-elif x['status']=='blocked':
-    task['status']='blocked'
-else:
-    task['status']='failed'
+if x['status']=='completed': task['status']='completed'
+elif x['status']=='blocked': task['status']='blocked'
+else: task['status']='failed'
 task['attempts']=task.get('attempts',0)+1; task['updated_at']=datetime.datetime.now(datetime.timezone.utc).isoformat(); task['proof']='model-output-plus-independent-regression'
 if x['next_task'] is not None and not any(t['id']==x['next_task'] for t in q['tasks']): raise SystemExit('INVALID_NEXT_TASK')
 json.dump(q,open(qpath,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
-state=pathlib.Path(root,'swarm/autopilot/runtime-state.json')
-json.dump({'last_task':x['task_id'],'last_status':x['status'],'next_task':x['next_task'],'verified_tests':results},open(state,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
+state=pathlib.Path(root,'swarm/autopilot/runtime-state.json'); json.dump({'last_task':x['task_id'],'last_status':x['status'],'next_task':x['next_task'],'verified_tests':results},open(state,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
 ev=pathlib.Path(root,'swarm/autopilot/evidence.jsonl'); record={'task_id':x['task_id'],'status':x['status'],'next_task':x['next_task'],'summary':x['summary'],'tests':results,'time':datetime.datetime.now(datetime.timezone.utc).isoformat()}
 with ev.open('a',encoding='utf-8') as f: f.write(json.dumps(record,ensure_ascii=False)+'\n')
 json.dump(x,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=2)
