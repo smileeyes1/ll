@@ -1,12 +1,96 @@
 {
   "schema_version": "1.0",
-  "policy": {"source_of_truth": "repository", "chat_memory_required": false, "max_retries": 3},
+  "policy": {
+    "source_of_truth": "repository",
+    "chat_memory_required": false,
+    "max_retries": 3
+  },
   "tasks": [
-    {"id":"SWARM-001","role":"planner","status":"pending","depends_on":[],"goal":"Validate project objective and acceptance criteria","next":"SWARM-002"},
-    {"id":"SWARM-002","role":"builder","status":"pending","depends_on":["SWARM-001"],"goal":"Prepare/verify project artifacts","next":"SWARM-003"},
-    {"id":"SWARM-003","role":"tester","status":"pending","depends_on":["SWARM-002"],"goal":"Run structural and regression tests","next":"SWARM-004"},
-    {"id":"SWARM-004","role":"adversary","status":"pending","depends_on":["SWARM-003"],"goal":"Attempt controlled failure and detect corruption","next":"SWARM-005"},
-    {"id":"SWARM-005","role":"reviewer","status":"pending","depends_on":["SWARM-004"],"goal":"Verify evidence and consistency","next":"SWARM-006"},
-    {"id":"SWARM-006","role":"release","status":"pending","depends_on":["SWARM-005"],"goal":"Apply release gate","next":null}
+    {
+      "id": "SWARM-001",
+      "role": "planner",
+      "status": "pending",
+      "depends_on": [],
+      "goal": "Validate project objective and acceptance criteria",
+      "next": "SWARM-002"
+    },
+    {
+      "id": "SWARM-002",
+      "role": "builder",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-001"
+      ],
+      "goal": "Prepare/verify project artifacts",
+      "next": "SWARM-003"
+    },
+    {
+      "id": "SWARM-003",
+      "role": "tester",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-002"
+      ],
+      "goal": "Run structural and regression tests",
+      "next": "SWARM-004"
+    },
+    {
+      "id": "SWARM-004",
+      "role": "adversary",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-003"
+      ],
+      "goal": "Attempt controlled failure and detect corruption",
+      "next": "SWARM-005"
+    },
+    {
+      "id": "SWARM-005",
+      "role": "reviewer",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-004"
+      ],
+      "goal": "Verify evidence and consistency",
+      "next": "SWARM-006"
+    },
+    {
+      "id": "SWARM-006",
+      "role": "release",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-005"
+      ],
+      "goal": "Apply release gate",
+      "next": null
+    },
+    {
+      "id": "INTENT-2026-09-01-110000-user-autonomy",
+      "role": "orchestrator",
+      "status": "pending",
+      "depends_on": [
+        "SWARM-001",
+        "SWARM-002",
+        "SWARM-003",
+        "SWARM-004",
+        "SWARM-005",
+        "SWARM-006"
+      ],
+      "goal": "اجعل نظام ll يعمل كمنصة إنتاج ذاتية بالكامل للمستخدم النهائي: يفهم النوايا الواردة، يحولها إلى مواصفات ومهام، ينفذها سحابيًا دون موافقات مرحلية، يحافظ على حالة دائمة خارج المحادثة، يستمر بعد إغلاق الهاتف أو المحادثة، ويصل إلى منتج جاهز للاستخدام والنشر مع أدلة فعلية.",
+      "acceptance_criteria": [
+        "لا تعتمد الاستمرارية التشغيلية على ذاكرة أو بقاء محادثة ChatGPT.",
+        "النية المسجلة في المشروع تتحول تلقائيًا إلى مهام قابلة للتنفيذ وتبدأ الدورة دون موافقة بشرية بين المراحل.",
+        "كل مهمة تمر بتنفيذ واختبار وإصلاح وإعادة اختبار وEvidence وCheckpoint وCommit.",
+        "النظام يستعيد العمل تلقائيًا عند فشل Agent أو انتهاء Lease أو فشل مسار التنفيذ.",
+        "لا يسمح النظام بنجاح أو GO أو COMPLETE بلا أدلة قابلة للتحقق.",
+        "لا يستطيع الوكيل تعطيل الاختبارات أو Release Gate أو توسيع صلاحياته لتجاوز فشل.",
+        "توجد آلية Watchdog واستئناف تلقائي تمنع توقف الدورة بسبب غياب التفاعل البشري.",
+        "توجد قناة عملية لاستقبال النوايا من واجهة مستخدم نهائية وتحويلها إلى Intent Inbox دون تحرير ملفات يدويًا.",
+        "يتم اختبار التشغيل الفعلي، Recovery، Failover، Regression، Adversarial وChaos قبل RELEASED.",
+        "عند اكتمال المتطلبات يتم Build ثم Release Gate ثم Deploy ثم Smoke Test وحفظ Artifact ورابط المنتج."
+      ],
+      "source_intent": "2026-09-01-110000-user-autonomy",
+      "next": null
+    }
   ]
 }

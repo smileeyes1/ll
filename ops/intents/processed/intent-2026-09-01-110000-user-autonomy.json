@@ -15,5 +15,6 @@
     "عند اكتمال المتطلبات يتم Build ثم Release Gate ثم Deploy ثم Smoke Test وحفظ Artifact ورابط المنتج."
   ],
   "source": "chatgpt-user-intent",
-  "status": "pending"
+  "status": "normalized",
+  "normalized_at": "2026-09-01T11:25:32.510754+00:00"
 }
