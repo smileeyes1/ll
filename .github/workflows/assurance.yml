@@ -29,6 +29,10 @@ jobs:
         run: bash scripts/health-check.sh
       - name: Root structure test
         run: bash tests/test-structure.sh
+      - name: Intent achievement gate
+        run: bash scripts/intent-gate.sh
+      - name: Intent gate regression test
+        run: bash tests/test-intent-gate.sh
       - name: Root adversarial test
         run: bash tests/test-adversarial.sh
       - name: Project Factory smoke test
@@ -58,6 +62,7 @@ jobs:
         run: |
           bash scripts/health-check.sh
           bash tests/test-structure.sh
+          bash tests/test-intent-gate.sh
           bash tests/test-adversarial.sh
           cd projects/demo-project
           bash tests/test-structure.sh
@@ -74,6 +79,8 @@ jobs:
             echo "Ref: $GITHUB_REF"
             echo 'Root Health: PASS'
             echo 'Root Structure: PASS'
+            echo 'Intent Gate: PASS'
+            echo 'Intent Gate Regression: PASS'
             echo 'Root Adversarial: PASS'
             echo 'Factory Smoke: PASS'
             echo 'Demo Project: PASS'
