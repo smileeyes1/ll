@@ -1,0 +1,3 @@
+reason=live-e2e-after-stale-state-guard
+expected=leadership-pass,nbag-pass,recovery-or-execution,checkpoint-safe,self-chain
+runtime_artifacts=must-not-commit
