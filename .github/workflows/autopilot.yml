@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
-  workflow_run:
-    workflows: ["Ω Assurance"]
-    types: [completed]
 
 permissions:
   contents: write
@@ -18,7 +15,6 @@ concurrency:
 
 jobs:
   autopilot:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -29,7 +25,7 @@ jobs:
       - name: Read durable project state
         run: |
           set -euo pipefail
-          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py; do test -s "$f"; done
+          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py; do test -s "$f"; done
 
       - name: Compile intent gaps into tasks
         run: |
@@ -101,37 +97,98 @@ jobs:
           set -euo pipefail
           python3 swarm/autopilot/recovery-policy.py
 
-      - name: Autonomous checkpoint commit
+      - name: Decide autonomous continuation
+        id: cont
+        run: |
+          set -euo pipefail
+          python3 swarm/autopilot/continuation.py
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          x=json.load(open('swarm/autopilot/continuation.json',encoding='utf-8'))
+          assert x['gate']=='OMEGA_CONTINUATION'
+          assert x['rule']=='CONTINUE_UNTIL_TERMINAL_OR_SAFE_BLOCKED'
+          assert x['decision'] in ('CONTINUE','SAFE_BLOCKED','TERMINAL_CANDIDATE')
+          print('decision='+x['decision'])
+          PY
+
+      - name: Continuation safety regression
         if: steps.nbag.outputs.active == 'true'
         run: |
           set -euo pipefail
+          bash scripts/health-check.sh
+          bash tests/test-structure.sh
+          bash tests/test-intent-gate.sh
+          bash tests/test-nbag.sh
+          bash tests/test-continuation.sh
+          bash tests/test-adversarial.sh
+
+      - name: Terminal candidate verification
+        if: steps.cont.outputs.decision == 'TERMINAL_CANDIDATE'
+        run: |
+          set -euo pipefail
+          bash scripts/health-check.sh
+          bash tests/test-structure.sh
+          bash scripts/intent-gate.sh
+          bash tests/test-intent-gate.sh
+          bash tests/test-nbag.sh
+          bash tests/test-continuation.sh
+          bash tests/test-adversarial.sh
+          if [ -x projects/demo-project/scripts/release-gate.sh ]; then
+            bash projects/demo-project/scripts/release-gate.sh
+          fi
+
+      - name: Write continuation evidence
+        run: |
+          set -euo pipefail
           mkdir -p ops
-          cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
-          cp swarm/autopilot/next-best-action.json ops/next-best-action.json
+          cp swarm/autopilot/continuation.json ops/continuation-state.json
+          case '${{ steps.cont.outputs.decision }}' in
+            SAFE_BLOCKED)
+              printf '# SAFE_BLOCKED\n\nThe autonomous continuation controller found a terminal failure or dependency deadlock. See ops/continuation-state.json and task evidence.\n' > ops/SAFE_BLOCKED.md
+              rm -f ops/TERMINAL_CANDIDATE.md
+              ;;
+            TERMINAL_CANDIDATE)
+              printf '# TERMINAL_CANDIDATE\n\nNo pending or failed task remains. Terminal gates must prove the intent before ACHIEVED/RELEASED.\n' > ops/TERMINAL_CANDIDATE.md
+              rm -f ops/SAFE_BLOCKED.md
+              ;;
+            CONTINUE)
+              rm -f ops/SAFE_BLOCKED.md ops/TERMINAL_CANDIDATE.md
+              ;;
+          esac
+
+      - name: Autonomous checkpoint commit
+        run: |
+          set -euo pipefail
+          mkdir -p ops
+          test ! -f swarm/autopilot/last-agent-output.json || cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
+          test ! -f swarm/autopilot/next-best-action.json || cp swarm/autopilot/next-best-action.json ops/next-best-action.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
             echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'; exit 1
           fi
-          git diff --cached --quiet || git commit -m "chore: NBAG autonomous checkpoint (${{ steps.nbag.outputs.task_id }})"
+          git diff --cached --quiet || git commit -m "chore: autonomous continuation checkpoint (${{ steps.nbag.outputs.task_id || 'no-task' }})"
           git push
 
-      - name: Dispatch next assurance cycle
+      - name: Dispatch assurance evidence cycle
         if: steps.nbag.outputs.active == 'true' && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run assurance.yml --ref main
 
-      - name: Terminal evidence only
-        if: steps.nbag.outputs.active != 'true'
+      - name: Dispatch immediate next autonomous cycle
+        if: steps.cont.outputs.decision == 'CONTINUE' && success()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          mkdir -p artifacts
-          {
-            echo '# Autonomous Terminal State'
-            echo
-            echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo 'Intent compiler found no missing task and NBAG found no executable action.'
-          } > artifacts/autonomous-terminal.md
-          echo 'NO_EXECUTABLE_ACTION: no main-branch commit is created.'
+          echo 'SELF_CHAIN=DISPATCH_NEXT'
+          gh workflow run autopilot.yml --ref main
+
+      - name: Safe blocked terminal
+        if: steps.cont.outputs.decision == 'SAFE_BLOCKED'
+        run: echo 'AUTONOMY=SAFE_BLOCKED; evidence persisted; no automatic next cycle.'
+
+      - name: Terminal candidate reached
+        if: steps.cont.outputs.decision == 'TERMINAL_CANDIDATE'
+        run: echo 'AUTONOMY=TERMINAL_CANDIDATE; terminal gates passed for this cycle; no invented task.'
