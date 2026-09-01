@@ -6,6 +6,7 @@ on:
     branches: [ main ]
     paths:
       - 'INTENT.md'
+      - 'ops/intents/inbox/**'
       - 'intent-inbox/**'
       - 'ops/autonomy-kick/**'
   schedule:
@@ -31,14 +32,32 @@ jobs:
       - name: Read durable project state
         run: |
           set -euo pipefail
-          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py; do test -s "$f"; done
+          for f in AUTONOMY_CONSTITUTION.md INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md RUNBOOK.md swarm/autopilot/task-queue.json swarm/autopilot/leadership-core.py swarm/autopilot/intent-compiler.py swarm/autopilot/nbag.py swarm/autopilot/continuation.py; do test -s "$f"; done
+
+      - name: Ω Autonomous Leadership mandatory gate
+        id: lead
+        run: |
+          set -euo pipefail
+          python3 swarm/autopilot/leadership-core.py >/tmp/leadership.json
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          x=json.load(open('swarm/autopilot/leadership-decision.json',encoding='utf-8'))
+          assert x['gate']=='OMEGA_AUTONOMOUS_LEADERSHIP'
+          assert x['rule']=='NO_LEADERSHIP_DECISION_NO_NBAG_NO_EXECUTION'
+          assert x['decision'] in ('PROCEED','HUMAN_REQUIRED','SAFE_BLOCKED')
+          assert x['question_count'] >= 17
+          print('decision='+x['decision'])
+          print('LEADERSHIP_DECISION:',x['decision'],'QUESTIONS:',x['question_count'])
+          PY
 
       - name: Compile intent gaps into tasks
+        if: steps.lead.outputs.decision == 'PROCEED'
         run: |
           set -euo pipefail
           python3 swarm/autopilot/intent-compiler.py
 
       - name: Ω NBAG mandatory decision gate
+        if: steps.lead.outputs.decision == 'PROCEED'
         id: nbag
         run: |
           set -euo pipefail
@@ -54,27 +73,29 @@ jobs:
           PY
 
       - name: Verify decision before execution
-        if: steps.nbag.outputs.active == 'true'
+        if: steps.lead.outputs.decision == 'PROCEED' && steps.nbag.outputs.active == 'true'
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import json
+          lead=json.load(open('swarm/autopilot/leadership-decision.json',encoding='utf-8'))
+          assert lead['decision']=='PROCEED'
           x=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
           assert x['decision']=='EXECUTE'
           assert x['selected_task_id']=='${{ steps.nbag.outputs.task_id }}'
           assert x['candidate_count'] > 0
-          print('NBAG_EXECUTION_AUTHORIZED:', x['selected_task_id'])
+          print('LEADERSHIP_AND_NBAG_EXECUTION_AUTHORIZED:', x['selected_task_id'])
           PY
 
       - name: Cache local model
-        if: steps.nbag.outputs.active == 'true'
+        if: steps.lead.outputs.decision == 'PROCEED' && steps.nbag.outputs.active == 'true'
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/ll-model
           key: ll-qwen25-05b-q4km-v2
 
       - name: Run real local model agent
-        if: steps.nbag.outputs.active == 'true'
+        if: steps.lead.outputs.decision == 'PROCEED' && steps.nbag.outputs.active == 'true'
         env:
           NBAG_TASK_ID: ${{ steps.nbag.outputs.task_id }}
         run: |
@@ -82,7 +103,7 @@ jobs:
           bash swarm/autopilot/model-runner.sh
 
       - name: Validate autonomous result
-        if: steps.nbag.outputs.active == 'true'
+        if: steps.lead.outputs.decision == 'PROCEED' && steps.nbag.outputs.active == 'true'
         run: |
           python3 - <<'PY'
           import json
@@ -94,11 +115,11 @@ jobs:
           assert all(isinstance(e,dict) and 'path' in e and 'content' in e for e in x['edits'])
           d=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
           assert d['selected_task_id']==x['task_id']
-          print('REAL_AGENT_OUTPUT: VALID; NBAG: ENFORCED')
+          print('REAL_AGENT_OUTPUT: VALID; LEADERSHIP+NBAG: ENFORCED')
           PY
 
       - name: Apply bounded recovery policy
-        if: steps.nbag.outputs.active == 'true'
+        if: steps.lead.outputs.decision == 'PROCEED' && steps.nbag.outputs.active == 'true'
         run: |
           set -euo pipefail
           python3 swarm/autopilot/recovery-policy.py
@@ -117,12 +138,12 @@ jobs:
           print('decision='+x['decision'])
           PY
 
-      - name: Continuation safety regression
-        if: steps.nbag.outputs.active == 'true'
+      - name: Leadership and continuation safety regression
         run: |
           set -euo pipefail
           bash scripts/health-check.sh
           bash tests/test-structure.sh
+          bash tests/test-leadership.sh
           bash tests/test-intent-gate.sh
           bash tests/test-nbag.sh
           bash tests/test-continuation.sh
@@ -134,6 +155,7 @@ jobs:
           set -euo pipefail
           bash scripts/health-check.sh
           bash tests/test-structure.sh
+          bash tests/test-leadership.sh
           bash scripts/intent-gate.sh
           bash tests/test-intent-gate.sh
           bash tests/test-nbag.sh
@@ -147,10 +169,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ops
+          cp swarm/autopilot/leadership-decision.json ops/leadership-decision.json
           cp swarm/autopilot/continuation.json ops/continuation-state.json
           case '${{ steps.cont.outputs.decision }}' in
             SAFE_BLOCKED)
-              printf '# SAFE_BLOCKED\n\nThe autonomous continuation controller found a terminal failure or dependency deadlock. See ops/continuation-state.json and task evidence.\n' > ops/SAFE_BLOCKED.md
+              printf '# SAFE_BLOCKED\n\nLeadership/continuation found a real blocker, human authority requirement, terminal failure, or dependency deadlock. See ops/leadership-decision.json and ops/continuation-state.json.\n' > ops/SAFE_BLOCKED.md
               rm -f ops/TERMINAL_CANDIDATE.md
               ;;
             TERMINAL_CANDIDATE)
@@ -174,11 +197,11 @@ jobs:
           if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
             echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'; exit 1
           fi
-          git diff --cached --quiet || git commit -m "chore: autonomous continuation checkpoint (${{ steps.nbag.outputs.task_id || 'no-task' }})"
+          git diff --cached --quiet || git commit -m "chore: autonomous leadership checkpoint (${{ steps.nbag.outputs.task_id || 'no-task' }})"
           git push
 
       - name: Dispatch assurance evidence cycle
-        if: steps.nbag.outputs.active == 'true' && success()
+        if: steps.cont.outputs.decision != 'SAFE_BLOCKED' && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run assurance.yml --ref main
