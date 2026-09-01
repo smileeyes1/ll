@@ -13,36 +13,52 @@ LLAMA_SHA="91d7b03ddae498a39f28fdb85d84d2b4a0fd3838d10b4f897e0ef8975bb9b583"
 mkdir -p "$MODEL_DIR" "$BIN_DIR" "$RUNTIME"
 install_llama() {
   local archive="$RUNTIME/llama.tar.gz"
+  local extract="$RUNTIME/llama-extract"
+  local need_extract=0
+
+  # Never trust a cached executable after a dependency failure. Rebuild the
+  # complete runtime from the verified archive when dependencies are missing.
   if [ -x "$BIN" ]; then
     export LD_LIBRARY_PATH="$BIN_DIR:${LD_LIBRARY_PATH:-}"
-    "$BIN" --version >/dev/null 2>&1 || rm -f "$BIN"
+    if ! "$BIN" --version >/dev/null 2>&1; then need_extract=1; fi
+  else
+    need_extract=1
   fi
-  if [ ! -x "$BIN" ]; then
+
+  if [ "$need_extract" -eq 0 ]; then
+    local missing
+    missing=$(ldd "$BIN" 2>&1 | awk '/not found/{print $1}' | sort -u || true)
+    [ -z "$missing" ] || need_extract=1
+  fi
+
+  if [ "$need_extract" -eq 1 ]; then
     curl -fsSL --retry 4 --retry-delay 2 "$LLAMA_URL" -o "$archive"
     echo "$LLAMA_SHA  $archive" | sha256sum -c -
-    rm -rf "$RUNTIME/llama-extract"
-    mkdir -p "$RUNTIME/llama-extract"
-    tar -xzf "$archive" -C "$RUNTIME/llama-extract"
+    rm -rf "$extract" "$BIN_DIR"
+    mkdir -p "$extract" "$BIN_DIR"
+    tar -xzf "$archive" -C "$extract"
     local found src
-    found=$(find "$RUNTIME/llama-extract" -type f -name llama-cli -print -quit)
+    found=$(find "$extract" -type f -name llama-cli -print -quit)
     test -n "$found"
     src="$(dirname "$found")"
     cp "$found" "$BIN"
-    # Release archives may place required shared objects beside the CLI or
-    # in nested lib directories. Copy every .so from the extracted tree into
-    # one deterministic runtime directory, then verify dynamic dependencies.
-    find "$RUNTIME/llama-extract" -type f \( -name '*.so' -o -name '*.so.*' \) -exec cp -f {} "$BIN_DIR/" \;
+    # Preserve the complete runtime library set, including symlinks and
+    # nested directories. Flattening is safe because the release uses SONAMEs
+    # and avoids the previous partial-copy failure mode.
+    find "$extract" -type f -o -type l | while IFS= read -r f; do
+      case "$f" in
+        *.so|*.so.*) cp -aL "$f" "$BIN_DIR/" ;;
+      esac
+    done
     chmod +x "$BIN"
   fi
+
   export LD_LIBRARY_PATH="$BIN_DIR:${LD_LIBRARY_PATH:-}"
-  # Fail early with a diagnostic if a shared dependency is still missing.
-  if command -v ldd >/dev/null 2>&1; then
-    local missing
-    missing=$(ldd "$BIN" 2>&1 | awk '/not found/{print $1}' | sort -u || true)
-    if [ -n "$missing" ]; then
-      echo "MISSING_SHARED_LIBRARIES:$missing" >&2
-      return 1
-    fi
+  local missing_after
+  missing_after=$(ldd "$BIN" 2>&1 | awk '/not found/{print $1}' | sort -u || true)
+  if [ -n "$missing_after" ]; then
+    echo "MISSING_SHARED_LIBRARIES:$missing_after" >&2
+    return 1
   fi
   "$BIN" --version >/dev/null
 }
