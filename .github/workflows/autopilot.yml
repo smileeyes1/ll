@@ -1,0 +1,66 @@
+name: Ω Autonomous Project Loop
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_run:
+    workflows: ["Ω Assurance"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autonomous-main
+  cancel-in-progress: false
+
+jobs:
+  autopilot:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read durable project state
+        run: |
+          test -s SPEC.md
+          test -s STATE.md
+          test -s DECISIONS.md
+          test -s CAPABILITIES.md
+          test -s EVIDENCE.md
+          test -s swarm/autopilot/task-queue.json
+
+      - name: Run provider-neutral agent
+        run: |
+          chmod +x swarm/autopilot/model-runner.sh
+          bash swarm/autopilot/model-runner.sh > swarm/autopilot/last-agent-output.json
+
+      - name: Validate agent output
+        run: |
+          python3 - <<'PY'
+          import json
+          p='swarm/autopilot/last-agent-output.json'
+          x=json.load(open(p))
+          required=['task_id','status','next_task','changed_files','tests','evidence','failure_reason']
+          assert all(k in x for k in required)
+          assert x['status'] in ('ready','blocked','completed')
+          assert not (x['status']=='completed' and not x['evidence'])
+          print('AGENT_OUTPUT: VALID')
+          PY
+
+      - name: Commit autonomous checkpoint
+        run: |
+          mkdir -p ops
+          cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/autopilot-last-result.json swarm/autopilot/runtime-prompt.md
+          git diff --cached --quiet || git commit -m 'chore: autonomous agent checkpoint'
+          git push
+
+      - name: Trigger assurance after checkpoint
+        run: echo 'Checkpoint committed; Assurance workflow will verify it.'
