@@ -24,14 +24,26 @@ install_llama() {
     mkdir -p "$RUNTIME/llama-extract"
     tar -xzf "$archive" -C "$RUNTIME/llama-extract"
     local found src
-    found=$(find "$RUNTIME/llama-extract" -type f -name llama-cli | head -1)
+    found=$(find "$RUNTIME/llama-extract" -type f -name llama-cli -print -quit)
     test -n "$found"
     src="$(dirname "$found")"
-    cp "$src/llama-cli" "$BIN_DIR/"
-    find "$src" -maxdepth 1 -type f \( -name '*.so' -o -name '*.so.*' \) -exec cp -f {} "$BIN_DIR/" \;
+    cp "$found" "$BIN"
+    # Release archives may place required shared objects beside the CLI or
+    # in nested lib directories. Copy every .so from the extracted tree into
+    # one deterministic runtime directory, then verify dynamic dependencies.
+    find "$RUNTIME/llama-extract" -type f \( -name '*.so' -o -name '*.so.*' \) -exec cp -f {} "$BIN_DIR/" \;
     chmod +x "$BIN"
   fi
   export LD_LIBRARY_PATH="$BIN_DIR:${LD_LIBRARY_PATH:-}"
+  # Fail early with a diagnostic if a shared dependency is still missing.
+  if command -v ldd >/dev/null 2>&1; then
+    local missing
+    missing=$(ldd "$BIN" 2>&1 | awk '/not found/{print $1}' | sort -u || true)
+    if [ -n "$missing" ]; then
+      echo "MISSING_SHARED_LIBRARIES:$missing" >&2
+      return 1
+    fi
+  fi
   "$BIN" --version >/dev/null
 }
 install_model() {
