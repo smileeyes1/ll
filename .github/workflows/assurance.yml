@@ -49,6 +49,18 @@ jobs:
           bash tests/test-adversarial.sh
           bash scripts/release-gate.sh
 
+      - name: Autonomous loop smoke test
+        run: |
+          chmod +x swarm/autopilot/*.sh
+          bash swarm/autopilot/orchestrator.sh
+          test -s swarm/autopilot/task-queue.json
+          test -s swarm/autopilot/runtime-state.json
+
+      - name: Chaos / disaster drill
+        run: |
+          chmod +x swarm/autopilot/*.sh
+          bash swarm/autopilot/chaos-test.sh
+
       - name: Regression pass
         run: |
           bash scripts/health-check.sh
@@ -73,6 +85,8 @@ jobs:
             echo 'Root Adversarial: PASS'
             echo 'Factory Smoke: PASS'
             echo 'Demo Project: PASS'
+            echo 'Autonomous Loop Smoke: PASS'
+            echo 'Chaos / Disaster Drill: PASS'
             echo 'Regression: PASS'
             echo 'Release Gate: PASS'
           } > artifacts/assurance-report.md
@@ -100,6 +114,8 @@ jobs:
             echo 'Root Adversarial: PASS'
             echo 'Factory Smoke: PASS'
             echo 'Demo Project: PASS'
+            echo 'Autonomous Loop Smoke: PASS'
+            echo 'Chaos / Disaster Drill: PASS'
             echo 'Regression: PASS'
             echo 'Release Gate: PASS'
           } > ops/last-run.md
