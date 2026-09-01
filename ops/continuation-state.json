@@ -5,7 +5,6 @@
   "leadership_decision": "PROCEED",
   "executable_task_ids": [
     "SWARM-001",
-    "INTENT-GAP-003",
     "INTENT-GAP-004",
     "INTENT-GAP-005",
     "INTENT-GAP-007",
@@ -21,7 +20,6 @@
     "SWARM-005",
     "SWARM-006",
     "INTENT-2026-09-01-110000-user-autonomy",
-    "INTENT-GAP-003",
     "INTENT-GAP-004",
     "INTENT-GAP-005",
     "INTENT-GAP-007",
@@ -32,6 +30,7 @@
   "failed_task_ids": [
     "INTENT-GAP-001",
     "INTENT-GAP-002",
+    "INTENT-GAP-003",
     "INTENT-GAP-006"
   ],
   "rule": "CONTINUE_UNTIL_TERMINAL_OR_SAFE_BLOCKED"
