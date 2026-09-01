@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["completed", "blocked", "failed"]},
+    "next_task": {"type": ["string", "null"]},
+    "summary": {"type": "string"},
+    "edits": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "content": {"type": "string"}
+        },
+        "required": ["path", "content"],
+        "additionalProperties": false
+      }
+    },
+    "tests": {"type": "array", "maxItems": 12, "items": {"type": "string"}},
+    "evidence": {"type": "array", "maxItems": 12, "items": {"type": "string"}},
+    "failure_reason": {"type": ["string", "null"]}
+  },
+  "required": ["task_id", "status", "next_task", "summary", "edits", "tests", "evidence", "failure_reason"],
+  "additionalProperties": false
+}
