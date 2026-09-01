@@ -1,0 +1,3 @@
+Ω AUTONOMY KICK
+Purpose: bootstrap the first run that uses the direct self-chaining autopilot workflow.
+After this run starts, continuation is owned by the repository via workflow_dispatch and NBAG.
