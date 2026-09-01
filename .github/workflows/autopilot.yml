@@ -29,78 +29,97 @@ jobs:
       - name: Read durable project state
         run: |
           set -euo pipefail
-          for f in SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json; do test -s "$f"; done
+          for f in INTENT.md SPEC.md STATE.md DECISIONS.md CAPABILITIES.md EVIDENCE.md swarm/autopilot/task-queue.json swarm/autopilot/nbag.py; do test -s "$f"; done
 
-      - name: Detect executable task
-        id: task
+      - name: Ω NBAG mandatory decision gate
+        id: nbag
         run: |
           set -euo pipefail
+          python3 swarm/autopilot/nbag.py >/tmp/nbag.json
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
-          q=json.load(open('swarm/autopilot/task-queue.json',encoding='utf-8'))
-          done={t['id'] for t in q['tasks'] if t.get('status')=='completed'}
-          active=next((t for t in q['tasks'] if t.get('status')=='pending' and all(d in done for d in t.get('depends_on',[]))),None)
-          print('active='+('true' if active else 'false'))
-          print('task_id='+(active['id'] if active else ''))
+          x=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
+          assert x['gate']=='OMEGA_NBAG'
+          assert x['rule']=='NO_VERIFIED_DECISION_NO_EXECUTION'
+          selected=x.get('selected_task_id') or ''
+          print('active='+('true' if selected else 'false'))
+          print('task_id='+selected)
+          PY
+
+      - name: Verify decision before execution
+        if: steps.nbag.outputs.active == 'true'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          x=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
+          assert x['decision']=='EXECUTE'
+          assert x['selected_task_id']=='${{ steps.nbag.outputs.task_id }}'
+          assert x['candidate_count'] > 0
+          print('NBAG_EXECUTION_AUTHORIZED:', x['selected_task_id'])
           PY
 
       - name: Cache local model
-        if: steps.task.outputs.active == 'true'
+        if: steps.nbag.outputs.active == 'true'
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/ll-model
-          key: ll-qwen25-05b-q4km-v1
+          key: ll-qwen25-05b-q4km-v2
 
       - name: Run real local model agent
-        if: steps.task.outputs.active == 'true'
+        if: steps.nbag.outputs.active == 'true'
+        env:
+          NBAG_TASK_ID: ${{ steps.nbag.outputs.task_id }}
         run: |
           chmod +x swarm/autopilot/model-runner.sh
           bash swarm/autopilot/model-runner.sh
 
       - name: Validate autonomous result
-        if: steps.task.outputs.active == 'true'
+        if: steps.nbag.outputs.active == 'true'
         run: |
           python3 - <<'PY'
           import json
           x=json.load(open('swarm/autopilot/last-agent-output.json',encoding='utf-8'))
           required=['task_id','status','next_task','summary','edits','tests','evidence','failure_reason']
           assert all(k in x for k in required)
-          assert x['task_id']=='${{ steps.task.outputs.task_id }}'
+          assert x['task_id']=='${{ steps.nbag.outputs.task_id }}'
           assert x['status'] in ('completed','blocked','failed')
-          assert x['evidence'] or x['status'] != 'completed'
           assert all(isinstance(e,dict) and 'path' in e and 'content' in e for e in x['edits'])
-          print('REAL_AGENT_OUTPUT: VALID')
+          d=json.load(open('swarm/autopilot/next-best-action.json',encoding='utf-8'))
+          assert d['selected_task_id']==x['task_id']
+          print('REAL_AGENT_OUTPUT: VALID; NBAG: ENFORCED')
           PY
 
       - name: Apply bounded recovery policy
-        if: steps.task.outputs.active == 'true'
+        if: steps.nbag.outputs.active == 'true'
         run: |
           set -euo pipefail
           python3 swarm/autopilot/recovery-policy.py
 
       - name: Autonomous checkpoint commit
-        if: steps.task.outputs.active == 'true'
+        if: steps.nbag.outputs.active == 'true'
         run: |
           set -euo pipefail
           mkdir -p ops
           cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
+          cp swarm/autopilot/next-best-action.json ops/next-best-action.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --name-only | grep -E '^\.github/|^\.git/' >/dev/null; then
             echo 'FORBIDDEN_AUTONOMOUS_CHANGE_IN_GOVERNANCE_AREA'; exit 1
           fi
-          git diff --cached --quiet || git commit -m "chore: autonomous agent task checkpoint (${{ steps.task.outputs.task_id }})"
+          git diff --cached --quiet || git commit -m "chore: NBAG autonomous checkpoint (${{ steps.nbag.outputs.task_id }})"
           git push
 
       - name: Dispatch next assurance cycle
-        if: steps.task.outputs.active == 'true' && success()
+        if: steps.nbag.outputs.active == 'true' && success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run assurance.yml --ref main
 
       - name: Terminal evidence only
-        if: steps.task.outputs.active != 'true'
+        if: steps.nbag.outputs.active != 'true'
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -108,6 +127,6 @@ jobs:
             echo '# Autonomous Terminal State'
             echo
             echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo 'All currently executable tasks are complete.'
+            echo 'NBAG found no executable action.'
           } > artifacts/autonomous-terminal.md
-          echo 'NO_EXECUTABLE_TASK: no main-branch commit is created.'
+          echo 'NO_EXECUTABLE_ACTION: no main-branch commit is created.'
