@@ -25,20 +25,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Health check
+      - name: Root health check
         run: bash scripts/health-check.sh
 
-      - name: Structure test
+      - name: Root structure test
         run: bash tests/test-structure.sh
 
-      - name: Adversarial test
+      - name: Root adversarial test
         run: bash tests/test-adversarial.sh
+
+      - name: Project Factory smoke test
+        run: |
+          test -s scripts/project-factory.sh
+          test -d templates/PROJECT
+          test -s templates/PROJECT/SPEC.md
+          test -s templates/PROJECT/STATE.md
+          test -s templates/PROJECT/scripts/release-gate.sh
+
+      - name: Demo project verification
+        run: |
+          cd projects/demo-project
+          bash tests/test-structure.sh
+          bash tests/test-adversarial.sh
+          bash scripts/release-gate.sh
 
       - name: Regression pass
         run: |
           bash scripts/health-check.sh
           bash tests/test-structure.sh
           bash tests/test-adversarial.sh
+          cd projects/demo-project
+          bash tests/test-structure.sh
+          bash tests/test-adversarial.sh
+          bash scripts/release-gate.sh
 
       - name: Build assurance report
         run: |
@@ -49,11 +68,13 @@ jobs:
             echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "Commit: $GITHUB_SHA"
             echo "Ref: $GITHUB_REF"
-            echo 'Health: PASS'
-            echo 'Structure: PASS'
-            echo 'Adversarial: PASS'
+            echo 'Root Health: PASS'
+            echo 'Root Structure: PASS'
+            echo 'Root Adversarial: PASS'
+            echo 'Factory Smoke: PASS'
+            echo 'Demo Project: PASS'
             echo 'Regression: PASS'
-            echo 'Release Gate: PASS for assurance layer'
+            echo 'Release Gate: PASS'
           } > artifacts/assurance-report.md
 
       - name: Upload evidence artifact
@@ -74,10 +95,13 @@ jobs:
             echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "Commit checked: $GITHUB_SHA"
             echo "Run: $GITHUB_RUN_ID"
-            echo 'Health: PASS'
-            echo 'Structure: PASS'
-            echo 'Adversarial: PASS'
+            echo 'Root Health: PASS'
+            echo 'Root Structure: PASS'
+            echo 'Root Adversarial: PASS'
+            echo 'Factory Smoke: PASS'
+            echo 'Demo Project: PASS'
             echo 'Regression: PASS'
+            echo 'Release Gate: PASS'
           } > ops/last-run.md
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
