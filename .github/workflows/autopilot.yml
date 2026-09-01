@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: autonomous-main
@@ -19,7 +20,7 @@ jobs:
   autopilot:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,33 +35,81 @@ jobs:
           test -s EVIDENCE.md
           test -s swarm/autopilot/task-queue.json
 
-      - name: Run provider-neutral agent
+      - name: Detect executable task
+        id: task
+        run: |
+          python3 - <<'PY'
+          import json
+          q=json.load(open('swarm/autopilot/task-queue.json'))
+          done={t['id'] for t in q['tasks'] if t['status']=='completed'}
+          active=next((t for t in q['tasks'] if t['status']=='pending' and all(d in done for d in t['depends_on'])),None)
+          print('active='+('true' if active else 'false'))
+          PY
+
+      - name: Cache local model
+        if: steps.task.outputs.active == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ll-model
+          key: ll-qwen25-05b-q4km-v1
+
+      - name: Run real local model agent
+        if: steps.task.outputs.active == 'true'
         run: |
           chmod +x swarm/autopilot/model-runner.sh
-          bash swarm/autopilot/model-runner.sh > swarm/autopilot/last-agent-output.json
+          bash swarm/autopilot/model-runner.sh
 
-      - name: Validate agent output
+      - name: Validate autonomous result
+        if: steps.task.outputs.active == 'true'
         run: |
           python3 - <<'PY'
           import json
           p='swarm/autopilot/last-agent-output.json'
           x=json.load(open(p))
-          required=['task_id','status','next_task','changed_files','tests','evidence','failure_reason']
+          required=['task_id','status','next_task','summary','edits','tests','evidence','failure_reason']
           assert all(k in x for k in required)
-          assert x['status'] in ('ready','blocked','completed')
-          assert not (x['status']=='completed' and not x['evidence'])
-          print('AGENT_OUTPUT: VALID')
+          assert x['status'] in ('completed','blocked','failed')
+          assert x['evidence'] or x['status'] != 'completed'
+          assert all(isinstance(e,dict) and 'path' in e and 'content' in e for e in x['edits'])
+          print('REAL_AGENT_OUTPUT: VALID')
           PY
 
-      - name: Commit autonomous checkpoint
+      - name: Apply blocker retry policy
+        if: steps.task.outputs.active == 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          p='swarm/autopilot/task-queue.json'; q=json.load(open(p))
+          for t in q['tasks']:
+              if t['status']=='blocked' and t.get('attempts',0) >= 3:
+                  t['status']='failed'; t['proof']='blocked-too-many-attempts'
+          json.dump(q,open(p,'w'),indent=2,ensure_ascii=False)
+          PY
+
+      - name: Autonomous checkpoint commit
+        if: steps.task.outputs.active == 'true'
         run: |
           mkdir -p ops
           cp swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/autopilot-last-result.json swarm/autopilot/runtime-prompt.md
-          git diff --cached --quiet || git commit -m 'chore: autonomous agent checkpoint'
+          git add swarm/autopilot/task-queue.json swarm/autopilot/runtime-state.json swarm/autopilot/evidence.jsonl swarm/autopilot/last-agent-output.json ops/autopilot-last-result.json
+          git diff --cached --quiet || git commit -m 'chore: autonomous agent task checkpoint'
           git push
 
-      - name: Trigger assurance after checkpoint
-        run: echo 'Checkpoint committed; Assurance workflow will verify it.'
+      - name: Dispatch next assurance cycle
+        if: steps.task.outputs.active == 'true' && success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run assurance.yml --ref main
+
+      - name: No-task terminal checkpoint
+        if: steps.task.outputs.active != 'true'
+        run: |
+          mkdir -p ops
+          printf '# Autonomous Terminal State\n\nAll executable tasks are complete.\nUTC: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > ops/autonomous-terminal.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/autonomous-terminal.md
+          git diff --cached --quiet || git commit -m 'chore: autonomous terminal checkpoint'
+          git push || true
