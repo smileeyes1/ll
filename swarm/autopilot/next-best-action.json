@@ -1,20 +1,11 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_NBAG",
-  "decision_time": "2026-09-01T17:58:21.737488+00:00",
+  "decision_time": "2026-09-01T17:58:41.479895+00:00",
   "intent_present": true,
   "state_present": true,
   "candidate_count": 11,
   "candidates": [
-    {
-      "task_id": "INTENT-GAP-002",
-      "score": 88,
-      "reasons": [
-        "role_value=90",
-        "intent_alignment=+6",
-        "retry_penalty=-8"
-      ]
-    },
     {
       "task_id": "INTENT-GAP-006",
       "score": 84,
@@ -46,6 +37,15 @@
       "reasons": [
         "role_value=90",
         "retry_penalty=-8"
+      ]
+    },
+    {
+      "task_id": "INTENT-GAP-002",
+      "score": 80,
+      "reasons": [
+        "role_value=90",
+        "intent_alignment=+6",
+        "retry_penalty=-16"
       ]
     },
     {
@@ -95,7 +95,7 @@
       ]
     }
   ],
-  "selected_task_id": "INTENT-GAP-002",
+  "selected_task_id": "INTENT-GAP-006",
   "decision": "EXECUTE",
   "rule": "NO_VERIFIED_DECISION_NO_EXECUTION"
 }
