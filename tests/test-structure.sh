@@ -22,4 +22,7 @@ grep -q 'leadership_decision' "$ROOT/swarm/autopilot/continuation.py" || { echo 
 grep -q 'STALE_SNAPSHOT' "$ROOT/swarm/autopilot/checkpoint.sh" || { echo 'FAIL stale checkpoint guard missing'; fail=1; }
 grep -q 'git reset --hard origin/main' "$ROOT/swarm/autopilot/checkpoint.sh" || { echo 'FAIL safe stale reset missing'; fail=1; }
 grep -q "'-st'" "$ROOT/swarm/autopilot/model-runner.sh" || { echo 'FAIL model runner single-turn missing'; fail=1; }
+if [ "$fail" -eq 0 ]; then
+  bash "$ROOT/tests/test-model-runner-contract.sh" || fail=1
+fi
 if [ "$fail" -eq 0 ]; then echo 'STRUCTURE=PASS'; exit 0; else echo 'STRUCTURE=FAIL'; exit 1; fi
