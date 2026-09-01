@@ -1,16 +1,25 @@
 # STATE
 
-STATUS: ASSURANCE_PROOF
+STATUS: VERIFIED_ASSURANCE_BASELINE
 VERSION: 2.0
 LAST_GOOD_COMMIT: 5b44c8d7757b0d70b4e2d243021d5bc770ceedbe
-LAST_VERIFIED_RUN: PENDING
-LAST_HEALTH: PENDING
-LAST_REGRESSION: PENDING
-LAST_ARTIFACT: PENDING
+LAST_VERIFIED_RUN: 33484726039
+LAST_HEALTH: PASS
+LAST_REGRESSION: PASS
+LAST_ARTIFACT: assurance-report / artifact 9791290151
 BLOCKER: NONE
-CURRENT_TASK: execute first real CI proof through pull request
-NEXT_ACTION: inspect workflow Run, jobs and artifact; then update main STATE/EVIDENCE
+CURRENT_TASK: activate and verify durable automated continuity checkpoint
+NEXT_ACTION: verify the next push-triggered run records `ops/last-run.md`; keep scheduled weekly assurance enabled
 RECOVERY_POINT: 5b44c8d7757b0d70b4e2d243021d5bc770ceedbe
+
+## Verified baseline
+- CI Run 33484726039 completed successfully on the proof PR.
+- CI Run 33484706739 completed successfully on main.
+- Health Check passed.
+- Structure test passed.
+- Adversarial test passed.
+- Regression pass passed.
+- Assurance artifact 9791290151 exists and is not expired.
 
 ## Resume Contract
 1. Read SPEC.md, STATE.md, DECISIONS.md, CAPABILITIES.md, EVIDENCE.md and RUNBOOK.md.
