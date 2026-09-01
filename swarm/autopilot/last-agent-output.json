@@ -1,8 +1,8 @@
 {
-  "task_id": "INTENT-GAP-002",
+  "task_id": "INTENT-GAP-006",
   "status": "failed",
   "next_task": null,
-  "summary": "MODEL_BAD_JSON",
+  "summary": "MODEL_NO_JSON",
   "edits": [],
   "tests": [
     {
@@ -27,5 +27,5 @@
     }
   ],
   "evidence": [],
-  "failure_reason": "MODEL_BAD_JSON"
+  "failure_reason": "MODEL_NO_JSON"
 }

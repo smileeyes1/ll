@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_AUTONOMOUS_LEADERSHIP",
-  "decision_time": "2026-09-01T17:55:20.909382+00:00",
+  "decision_time": "2026-09-01T17:57:11.542094+00:00",
   "decision": "PROCEED",
   "reason": "leadership_questions_satisfied_within_current_authority",
   "rule": "NO_LEADERSHIP_DECISION_NO_NBAG_NO_EXECUTION",
@@ -79,7 +79,7 @@
     {
       "key": "dependencies",
       "question": "ما التبعيات التي يجب تحققها قبل التنفيذ؟",
-      "answer": "executable_tasks=1; pending_dependencies are enforced by task queue",
+      "answer": "executable_tasks=11; pending_dependencies are enforced by task queue",
       "status": "ANSWERED",
       "source": "task-queue.json",
       "critical": false
