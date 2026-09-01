@@ -1,0 +1,85 @@
+name: Ω Assurance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: assurance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Health check
+        run: bash scripts/health-check.sh
+
+      - name: Structure test
+        run: bash tests/test-structure.sh
+
+      - name: Adversarial test
+        run: bash tests/test-adversarial.sh
+
+      - name: Regression pass
+        run: |
+          bash scripts/health-check.sh
+          bash tests/test-structure.sh
+          bash tests/test-adversarial.sh
+
+      - name: Build assurance report
+        run: |
+          mkdir -p artifacts
+          {
+            echo '# Assurance Report'
+            echo
+            echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Commit: $GITHUB_SHA"
+            echo "Ref: $GITHUB_REF"
+            echo 'Health: PASS'
+            echo 'Structure: PASS'
+            echo 'Adversarial: PASS'
+            echo 'Regression: PASS'
+            echo 'Release Gate: PASS for assurance layer'
+          } > artifacts/assurance-report.md
+
+      - name: Upload evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: assurance-report
+          path: artifacts/assurance-report.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Record continuity checkpoint
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p ops
+          {
+            echo '# Last Automated Checkpoint'
+            echo
+            echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Commit checked: $GITHUB_SHA"
+            echo 'Health: PASS'
+            echo 'Structure: PASS'
+            echo 'Adversarial: PASS'
+            echo 'Regression: PASS'
+          } > ops/last-run.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/last-run.md
+          git diff --cached --quiet || git commit -m 'chore: record automated assurance checkpoint'
+          git push
