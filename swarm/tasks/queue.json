@@ -1,0 +1,11 @@
+{
+  "schema": "omega-task-v1",
+  "tasks": [
+    {"id":"DEMO-001","role":"planner","status":"SUCCEEDED","goal":"Decompose demo-project assurance goal","acceptance":["task graph recorded"],"owner":"planner-1","lease_expires":null,"dependencies":[],"evidence":"swarm/runs/DEMO-001.md"},
+    {"id":"DEMO-002","role":"builder","status":"PENDING","goal":"Prepare demo artifact and state for swarm verification","acceptance":["artifact non-empty","state coherent"],"owner":null,"lease_expires":null,"dependencies":["DEMO-001"],"evidence":null},
+    {"id":"DEMO-003","role":"tester","status":"PENDING","goal":"Run structure and regression checks","acceptance":["all required checks pass"],"owner":null,"lease_expires":null,"dependencies":["DEMO-002"],"evidence":null},
+    {"id":"DEMO-004","role":"adversary","status":"PENDING","goal":"Attempt controlled failures and verify detection/recovery","acceptance":["failure detected","state restored","tests pass"],"owner":null,"lease_expires":null,"dependencies":["DEMO-003"],"evidence":null},
+    {"id":"DEMO-005","role":"reviewer","status":"PENDING","goal":"Review evidence sufficiency","acceptance":["claims trace to evidence"],"owner":null,"lease_expires":null,"dependencies":["DEMO-004"],"evidence":null},
+    {"id":"DEMO-006","role":"release","status":"PENDING","goal":"Evaluate release gate","acceptance":["GO only with complete evidence"],"owner":null,"lease_expires":null,"dependencies":["DEMO-005"],"evidence":null}
+  ]
+}
