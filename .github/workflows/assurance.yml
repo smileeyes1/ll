@@ -10,7 +10,7 @@ on:
     - cron: '17 4 * * 1'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: assurance-${{ github.ref }}
@@ -27,13 +27,10 @@ jobs:
 
       - name: Root health check
         run: bash scripts/health-check.sh
-
       - name: Root structure test
         run: bash tests/test-structure.sh
-
       - name: Root adversarial test
         run: bash tests/test-adversarial.sh
-
       - name: Project Factory smoke test
         run: |
           test -s scripts/project-factory.sh
@@ -41,26 +38,22 @@ jobs:
           test -s templates/PROJECT/SPEC.md
           test -s templates/PROJECT/STATE.md
           test -s templates/PROJECT/scripts/release-gate.sh
-
       - name: Demo project verification
         run: |
           cd projects/demo-project
           bash tests/test-structure.sh
           bash tests/test-adversarial.sh
           bash scripts/release-gate.sh
-
       - name: Autonomous loop smoke test
         run: |
           chmod +x swarm/autopilot/*.sh
           bash swarm/autopilot/orchestrator.sh
           test -s swarm/autopilot/task-queue.json
           test -s swarm/autopilot/runtime-state.json
-
       - name: Chaos / disaster drill
         run: |
           chmod +x swarm/autopilot/*.sh
           bash swarm/autopilot/chaos-test.sh
-
       - name: Regression pass
         run: |
           bash scripts/health-check.sh
@@ -70,7 +63,6 @@ jobs:
           bash tests/test-structure.sh
           bash tests/test-adversarial.sh
           bash scripts/release-gate.sh
-
       - name: Build assurance report
         run: |
           mkdir -p artifacts
@@ -90,7 +82,6 @@ jobs:
             echo 'Regression: PASS'
             echo 'Release Gate: PASS'
           } > artifacts/assurance-report.md
-
       - name: Upload evidence artifact
         uses: actions/upload-artifact@v4
         with:
@@ -98,29 +89,3 @@ jobs:
           path: artifacts/assurance-report.md
           if-no-files-found: error
           retention-days: 30
-
-      - name: Record continuity checkpoint
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-        run: |
-          mkdir -p ops
-          {
-            echo '# Last Automated Checkpoint'
-            echo
-            echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "Commit checked: $GITHUB_SHA"
-            echo "Run: $GITHUB_RUN_ID"
-            echo 'Root Health: PASS'
-            echo 'Root Structure: PASS'
-            echo 'Root Adversarial: PASS'
-            echo 'Factory Smoke: PASS'
-            echo 'Demo Project: PASS'
-            echo 'Autonomous Loop Smoke: PASS'
-            echo 'Chaos / Disaster Drill: PASS'
-            echo 'Regression: PASS'
-            echo 'Release Gate: PASS'
-          } > ops/last-run.md
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/last-run.md
-          git diff --cached --quiet || git commit -m 'chore: record automated assurance checkpoint'
-          git push
