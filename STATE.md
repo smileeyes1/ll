@@ -1,33 +1,35 @@
 # STATE
 
-STATUS: AUTONOMOUS_LEADERSHIP_INTEGRATION
+STATUS: AUTONOMOUS_LEADERSHIP_VERIFIED_ASSURANCE
 VERSION: 3.0
-LAST_GOOD_COMMIT: 5b44c8d7757b0d70b4e2d243021d5bc770ceedbe
-LAST_VERIFIED_RUN: 33484726039
-LAST_HEALTH: PASS_ON_BASELINE
-LAST_REGRESSION: PASS_ON_BASELINE
-LAST_ARTIFACT: assurance-report / artifact 9791290151
-BLOCKER: LIVE_VERIFICATION_PENDING
-CURRENT_TASK: verify Ω Autonomous Leadership Kernel + leadership-aware continuation + mandatory gate in GitHub Actions
-NEXT_ACTION: inspect the newest Ω Assurance run; if failure, diagnose exact step/log, repair, rerun; if success, record Evidence and promote leadership capability to VERIFIED, then verify live self-chain execution
-RECOVERY_POINT: 5b44c8d7757b0d70b4e2d243021d5bc770ceedbe
+LAST_GOOD_COMMIT: 6e3bdca312579c5c59560952cc991e579cb9b99f
+LAST_VERIFIED_RUN: 33538959880
+LAST_HEALTH: PASS
+LAST_REGRESSION: PASS
+LAST_ARTIFACT: assurance-report / artifact 9812791836
+BLOCKER: LIVE_SELF_CHAIN_E2E_PENDING
+CURRENT_TASK: prove a live Ω Autonomous Project Loop cycle uses Leadership → NBAG → Executor/Recovery → Continuation and, when CONTINUE, self-dispatches the next cycle without human action
+NEXT_ACTION: inspect the newest Autopilot run triggered after the Leadership integration; diagnose/repair any failure; capture decision/output/continuation evidence and the automatically spawned next run
+RECOVERY_POINT: 6e3bdca312579c5c59560952cc991e579cb9b99f
 
-## Integrated in v3.0
-- Canonical `AUTONOMY_CONSTITUTION.md`.
-- `swarm/autopilot/leadership-core.py` with core and dynamic domain questions.
-- Decisions: PROCEED / HUMAN_REQUIRED / SAFE_BLOCKED.
-- Mandatory Leadership Gate before intent compilation, NBAG and executor.
-- Continuation Controller obeys Leadership decision.
-- Dedicated `tests/test-leadership.sh` and leadership-aware continuation regression.
-- Assurance suite includes leadership tests.
-- Direct self-chain remains the primary continuation path; schedule is fallback.
+## Verified v3.0 assurance
+- Ω Assurance Run 33538959880 (#111) completed successfully.
+- Root Health and Structure passed.
+- Ω Autonomous Leadership gate tests passed.
+- HUMAN_REQUIRED and missing-core safety cases passed.
+- Intent Gate and Intent Compiler passed.
+- NBAG and leadership-aware Continuation passed.
+- Adversarial, Chaos/disaster, Autonomous loop smoke and full Regression passed.
+- Assurance artifact 9812791836 exists with SHA-256 digest recorded in EVIDENCE.md.
 
-## Truth status
-These changes are IMPLEMENTED/CONFIGURED, not yet VERIFIED by the latest CI at the time of this checkpoint. Do not claim production readiness until a real GitHub Actions run proves the new suite and a live autonomous cycle proves continuation.
+## Not yet claimed
+- A generic test suite does not prove completion of the user's full autonomy intent.
+- Direct self-chain is not promoted to fully VERIFIED until a live Autopilot cycle dispatches a subsequent Autopilot cycle and evidence is observed.
+- Marketable/production-ready/released status is not claimed until mission-level terminal criteria, deployment when applicable, smoke test and delivery evidence pass.
 
 ## Resume Contract
 1. Read AUTONOMY_CONSTITUTION.md, INTENT.md, SPEC.md, STATE.md, DECISIONS.md, CAPABILITIES.md, EVIDENCE.md and RUNBOOK.md.
-2. Inspect latest repository commit and latest Ω Assurance / Ω Autonomous Project Loop runs.
-3. Diagnose any failure from job steps/logs before changing code.
-4. Run/verify leadership, structure, intent, NBAG, continuation, adversarial and regression tests.
-5. Continue from CURRENT_TASK; do not redo verified work without changed input or contradictory evidence.
+2. Inspect newest Ω Autonomous Project Loop run and its exact job steps/logs.
+3. If failure: diagnose exact cause, preserve evidence, repair smallest safe component, rerun/recover.
+4. If success with CONTINUE: verify a new workflow_dispatch Autopilot run was created automatically.
+5. Update STATE/EVIDENCE only from observed proof; do not infer COMPLETE from configuration.
