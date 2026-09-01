@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "policy": {"source_of_truth": "repository", "chat_memory_required": false, "max_retries": 3},
+  "tasks": [
+    {"id":"SWARM-001","role":"planner","status":"pending","depends_on":[],"goal":"Validate project objective and acceptance criteria","next":"SWARM-002"},
+    {"id":"SWARM-002","role":"builder","status":"pending","depends_on":["SWARM-001"],"goal":"Prepare/verify project artifacts","next":"SWARM-003"},
+    {"id":"SWARM-003","role":"tester","status":"pending","depends_on":["SWARM-002"],"goal":"Run structural and regression tests","next":"SWARM-004"},
+    {"id":"SWARM-004","role":"adversary","status":"pending","depends_on":["SWARM-003"],"goal":"Attempt controlled failure and detect corruption","next":"SWARM-005"},
+    {"id":"SWARM-005","role":"reviewer","status":"pending","depends_on":["SWARM-004"],"goal":"Verify evidence and consistency","next":"SWARM-006"},
+    {"id":"SWARM-006","role":"release","status":"pending","depends_on":["SWARM-005"],"goal":"Apply release gate","next":null}
+  ]
+}
