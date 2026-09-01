@@ -61,7 +61,15 @@ jobs:
           grep -q 'NO LEADERSHIP DECISION' AUTONOMY_CONSTITUTION.md
           bash tests/test-structure.sh
           bash tests/test-adversarial.sh
+          if bash scripts/release-gate.sh >/tmp/factory-premature-gate.log 2>&1; then
+            echo 'FAIL: release gate allowed GO without artifact'
+            exit 1
+          fi
+          grep -q 'NO-GO: no non-empty artifact' /tmp/factory-premature-gate.log
+          echo 'FACTORY_PRE_ARTIFACT_NO_GO=PASS'
+          printf 'verified factory probe artifact\n' > artifacts/factory-product.txt
           bash scripts/release-gate.sh
+          echo 'FACTORY_POST_ARTIFACT_GO=PASS'
       - name: Demo project verification
         run: |
           cd projects/demo-project
@@ -113,6 +121,8 @@ jobs:
             echo 'Stale Snapshot Safety: PASS'
             echo 'Root Adversarial: PASS'
             echo 'Factory v3 Leadership Smoke: PASS'
+            echo 'Factory Premature Release: BLOCKED AS EXPECTED'
+            echo 'Factory Artifact Release: PASS'
             echo 'Demo Project: PASS'
             echo 'Autonomous Loop Smoke: PASS'
             echo 'Chaos / Disaster Drill: PASS'
