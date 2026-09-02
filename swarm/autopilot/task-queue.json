@@ -260,7 +260,17 @@
       "source_requirement": 8,
       "source_intent": "LL-AUTONOMY-001",
       "created_at": "2026-09-01T17:55:20.971840+00:00",
-      "next": null
+      "next": null,
+      "attempts": 1,
+      "updated_at": "2026-09-02T01:19:55.562437+00:00",
+      "proof": "leadership-nbag-schema-constrained-model-output-plus-independent-regression",
+      "recovery": {
+        "action": "automatic_retry",
+        "attempt": 1,
+        "max_retries": 3,
+        "time": "2026-09-02T01:19:55.647610+00:00",
+        "reason": "MODEL_NO_JSON"
+      }
     },
     {
       "id": "INTENT-GAP-009",
