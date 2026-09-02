@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_AUTONOMOUS_LEADERSHIP",
-  "decision_time": "2026-09-02T01:22:38.272789+00:00",
+  "decision_time": "2026-09-02T05:48:17.247035+00:00",
   "decision": "PROCEED",
   "reason": "leadership_questions_satisfied_within_current_authority",
   "rule": "NO_LEADERSHIP_DECISION_NO_NBAG_NO_EXECUTION",
@@ -71,7 +71,7 @@
     {
       "key": "bottleneck",
       "question": "ما الاختناق أو العائق الأعلى أثرًا الآن؟",
-      "answer": "BLOCKER=LIVE_SELF_CHAIN_E2E_PENDING; failed_tasks=8; current_task=prove a live Ω Autonomous Project Loop cycle uses Leadership → NBAG → Executor/Recovery → Continuation and, when CONTINUE, self-dispatches the next cycle without human action",
+      "answer": "BLOCKER=LIVE_SELF_CHAIN_E2E_PENDING; failed_tasks=9; current_task=prove a live Ω Autonomous Project Loop cycle uses Leadership → NBAG → Executor/Recovery → Continuation and, when CONTINUE, self-dispatches the next cycle without human action",
       "status": "ANSWERED",
       "source": "STATE.md/task-queue.json",
       "critical": false
@@ -79,7 +79,7 @@
     {
       "key": "dependencies",
       "question": "ما التبعيات التي يجب تحققها قبل التنفيذ؟",
-      "answer": "executable_tasks=3; pending_dependencies are enforced by task queue",
+      "answer": "executable_tasks=2; pending_dependencies are enforced by task queue",
       "status": "ANSWERED",
       "source": "task-queue.json",
       "critical": false
