@@ -6,8 +6,7 @@
   "executable_task_ids": [
     "INTENT-GAP-005",
     "INTENT-GAP-008",
-    "INTENT-GAP-009",
-    "INTENT-GAP-010"
+    "INTENT-GAP-009"
   ],
   "pending_task_ids": [
     "SWARM-002",
@@ -18,8 +17,7 @@
     "INTENT-2026-09-01-110000-user-autonomy",
     "INTENT-GAP-005",
     "INTENT-GAP-008",
-    "INTENT-GAP-009",
-    "INTENT-GAP-010"
+    "INTENT-GAP-009"
   ],
   "failed_task_ids": [
     "SWARM-001",
@@ -28,7 +26,8 @@
     "INTENT-GAP-003",
     "INTENT-GAP-004",
     "INTENT-GAP-006",
-    "INTENT-GAP-007"
+    "INTENT-GAP-007",
+    "INTENT-GAP-010"
   ],
   "rule": "CONTINUE_UNTIL_TERMINAL_OR_SAFE_BLOCKED"
 }
