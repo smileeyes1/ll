@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_AUTONOMOUS_LEADERSHIP",
-  "decision_time": "2026-10-04T23:23:06.541515+00:00",
+  "decision_time": "2026-10-05T02:09:22.966526+00:00",
   "decision": "PROCEED",
   "reason": "leadership_questions_satisfied_within_current_authority",
   "rule": "NO_LEADERSHIP_DECISION_NO_NBAG_NO_EXECUTION",
