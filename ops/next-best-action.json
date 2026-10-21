@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "gate": "OMEGA_NBAG",
-  "decision_time": "2026-10-21T05:58:43.280483+00:00",
+  "decision_time": "2026-10-21T11:12:31.000043+00:00",
   "intent_present": true,
   "state_present": true,
   "candidate_count": 0,
